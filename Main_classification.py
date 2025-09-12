@@ -292,18 +292,19 @@ class TextClassifier:
                 emb = self.embed(texts)
                 p_pred = self.clf_primary.predict(emb)[0]
                 s_pred = self.clf_secondary.predict(emb)[0]
-                return [p_pred,s_pred]
+                # Get predictions from your pipeline
+                preds = [p_pred, s_pred]  # e.g., ['History', 'Research/Informative']
+            
+                # Ensure it's a list of Python strings
+                preds_clean = [str(p) for p in preds]
+            
+                # Join into a nice string for display
+                return (", ".join(preds_clean))
+
 
 # Usage:
 pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
 statement = st.text_input("Enter a statment to the system for classification")
 if st.button("Classify"):
-    # Get predictions from your pipeline
-    preds = pipeline.predict(statement)  # e.g., ['History', 'Research/Informative']
-
-    # Ensure it's a list of Python strings
-    preds_clean = [str(p) for p in preds]
-
-    # Join into a nice string for display
-    st.markdown("**Predictions:** " + ", ".join(preds_clean))
+            st.markdown(TextClassifier.predict(statement))
 
