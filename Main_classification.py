@@ -306,5 +306,4 @@ class TextClassifier:
 pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
 statement = st.text_input("Enter a statment to the system for classification")
 if st.button("Classify"):
-            st.markdown(TextClassifier.predict(statement))
-
+            st.markdown(pipeline.predict(statement))
