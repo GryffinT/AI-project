@@ -289,9 +289,11 @@ class TextClassifier:
         return embeddings.cpu().numpy()
 
     def predict(self, texts):
-        emb = self.embed(texts)
+                emb = self.embed(texts)
+                p_pred = self.clf_primary.predict(emb)[0]
+                s_pred = self.clf_secondary.predict(emb)[0]
         return {
-            [self.clf_primary.predict(emb)(0), self.clf_secondary.predict(emb)(0)]
+            [p_pred, s_pred]
         }            
 
 # Usage:
