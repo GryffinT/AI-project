@@ -2,6 +2,7 @@
             # Neccisary dependencies
 import os
 import streamlit as st
+from matplotlib.lines import Line2D
 from sklearn.linear_model import LogisticRegression # For the secondary and primary classifications.
 from sklearn.model_selection import train_test_split # For creating the training and testing variables/shuffling data.
 from sklearn.metrics import accuracy_score # For scoring the model's prediction accuracy at the end.
