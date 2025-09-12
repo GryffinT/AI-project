@@ -219,51 +219,26 @@ secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
 
-# ---------------------------
-# 3. PCA for visualization only
+# Ensure alignment (truncate embeddings if needed)
+n = min(len(embeddings), len(training_pclass))
+embeddings = embeddings[:n]
+labels = np.array(training_pclass[:n])
+
+# Fit classifier
+clf_primary = LogisticRegression(max_iter=500)
+clf_primary.fit(embeddings, labels)
+
+# Reduce to 2D for plotting
 pca = PCA(n_components=2)
-X_2d = pca.fit_transform(embeddings)
+X_pca = pca.fit_transform(embeddings)
 
-clf_primary_2d = LogisticRegression(max_iter=500)
-clf_primary_2d.fit(X_2d, training_pclass)
-
-clf_secondary_2d = LogisticRegression(max_iter=500)
-clf_secondary_2d.fit(X_2d, training_sclass)
-
-# ---------------------------
-# 4. Create meshgrid for decision boundaries
-x_min, x_max = X_2d[:, 0].min() - 1, X_2d[:, 0].max() + 1
-y_min, y_max = X_2d[:, 1].min() - 1, X_2d[:, 1].max() + 1
-xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),
-                     np.linspace(y_min, y_max, 200))
-
-# Predict grids
-Z_primary = clf_primary_2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-Z_secondary = clf_secondary_2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-
-# ---------------------------
-# 5. Plot side by side
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-# Primary classifier
-axes[0].contourf(xx, yy, Z_primary, alpha=0.3, cmap='bwr')
-axes[0].scatter(X_2d[:, 0], X_2d[:, 1], c=training_pclass, cmap='bwr', edgecolor='k')
-axes[0].set_title("Primary Classifier Decision Boundary")
-axes[0].set_xlabel("PCA Component 1")
-axes[0].set_ylabel("PCA Component 2")
-
-# Secondary classifier
-axes[1].contourf(xx, yy, Z_secondary, alpha=0.3, cmap='rainbow')
-scatter = axes[1].scatter(X_2d[:, 0], X_2d[:, 1], c=training_sclass, cmap='rainbow', edgecolor='k')
-axes[1].set_title("Secondary Classifier Decision Boundary")
-axes[1].set_xlabel("PCA Component 1")
-axes[1].set_ylabel("PCA Component 2")
-
-# Add legend for secondary classes
-legend1 = axes[1].legend(*scatter.legend_elements(), title="Classes")
-axes[1].add_artist(legend1)
-
-plt.tight_layout()
+# Plot
+plt.figure(figsize=(8,6))
+scatter = plt.scatter(X_pca[:,0], X_pca[:,1], c=labels, cmap="viridis", alpha=0.7)
+plt.legend(*scatter.legend_elements(), title="Classes")
+plt.title("Logistic Regression decision space (PCA projection)")
+plt.xlabel("PC 1")
+plt.ylabel("PC 2")
 plt.show()
 
 
