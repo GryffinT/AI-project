@@ -241,20 +241,30 @@ X_pca = PCA(n_components=2).fit_transform(embeddings)
 fig, axes = plt.subplots(1, 2, figsize=(14,6))
 
 # Primary classifier scatter
-axes[0].scatter(X_pca[:,0], X_pca[:,1], c=p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
+scatter1 = axes[0].scatter(X_pca[:,0], X_pca[:,1], c=p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
 axes[0].set_title("Primary Classifier")
 axes[0].set_xlabel("PC 1")
 axes[0].set_ylabel("PC 2")
-handles, _ = axes[0].get_legend_handles_labels()
-axes[0].legend(handles, le_p.classes_, title="Classes")
+
+# Legend for primary
+colors = plt.cm.tab10(np.linspace(0, 1, len(le_p.classes_)))
+legend_elements = [Line2D([0], [0], marker='o', color='w', label=cls,
+                          markerfacecolor=colors[i], markersize=10)
+                   for i, cls in enumerate(le_p.classes_)]
+axes[0].legend(handles=legend_elements, title="Classes")
 
 # Secondary classifier scatter
-axes[1].scatter(X_pca[:,0], X_pca[:,1], c=s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k')
+scatter2 = axes[1].scatter(X_pca[:,0], X_pca[:,1], c=s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k')
 axes[1].set_title("Secondary Classifier")
 axes[1].set_xlabel("PC 1")
 axes[1].set_ylabel("PC 2")
-handles, _ = axes[1].get_legend_handles_labels()
-axes[1].legend(handles, le_s.classes_, title="Classes")
+
+# Legend for secondary
+colors2 = plt.cm.tab20(np.linspace(0, 1, len(le_s.classes_)))
+legend_elements2 = [Line2D([0], [0], marker='o', color='w', label=cls,
+                           markerfacecolor=colors2[i], markersize=10)
+                    for i, cls in enumerate(le_s.classes_)]
+axes[1].legend(handles=legend_elements2, title="Classes")
 
 plt.tight_layout()
 st.pyplot(fig)
