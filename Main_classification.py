@@ -172,7 +172,7 @@ secondary_labels = [document["sclass"] for document in data.values()]
             # Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
             #  assigning 50% of the data to training and 50% of the data to testing.
 
-training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(embeddings, primary_labels, secondary_labels, test_size=.5, random_state=42)
+training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(embeddings, primary_labels, secondary_labels, test_size=.1, random_state=42)
 
             # I would show what it looks like but it'd be a massive pain..
 
