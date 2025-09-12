@@ -219,55 +219,47 @@ secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
 
-# Ensure embeddings are numpy float arrays
-if not isinstance(training_text, np.ndarray):
-    training_text = np.array(training_text, dtype=np.float32)
-
-# Ensure labels are numpy arrays (int or str is fine, but consistent)
-training_pclass = np.array(training_pclass)
-training_sclass = np.array(training_sclass)
-
-
-# --- Reduce embeddings to 2D with PCA for visualization ---
+# ---------------------------
+# 3. PCA for visualization only
 pca = PCA(n_components=2)
-X_2d = pca.fit_transform(training_text)
+X_2d = pca.fit_transform(embeddings)
 
-# --- Train classifiers on reduced 2D embeddings (just for plotting) ---
-clf_primary_2d = LogisticRegression(max_iter=500).fit(X_2d, training_pclass)
-clf_secondary_2d = LogisticRegression(max_iter=500).fit(X_2d, training_sclass)
+clf_primary_2d = LogisticRegression(max_iter=500)
+clf_primary_2d.fit(X_2d, training_pclass)
 
-# --- Grid for decision boundary ---
+clf_secondary_2d = LogisticRegression(max_iter=500)
+clf_secondary_2d.fit(X_2d, training_sclass)
+
+# ---------------------------
+# 4. Create meshgrid for decision boundaries
 x_min, x_max = X_2d[:, 0].min() - 1, X_2d[:, 0].max() + 1
 y_min, y_max = X_2d[:, 1].min() - 1, X_2d[:, 1].max() + 1
 xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),
                      np.linspace(y_min, y_max, 200))
 
-# Predictions for primary
-Z_primary = clf_primary_2d.predict(np.c_[xx.ravel(), yy.ravel()])
-Z_primary = Z_primary.reshape(xx.shape)
+# Predict grids
+Z_primary = clf_primary_2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+Z_secondary = clf_secondary_2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
 
-# Predictions for secondary
-Z_secondary = clf_secondary_2d.predict(np.c_[xx.ravel(), yy.ravel()])
-Z_secondary = Z_secondary.reshape(xx.shape)
-
-# --- Plot side by side ---
+# ---------------------------
+# 5. Plot side by side
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-# Primary classifier plot
+# Primary classifier
 axes[0].contourf(xx, yy, Z_primary, alpha=0.3, cmap='bwr')
 axes[0].scatter(X_2d[:, 0], X_2d[:, 1], c=training_pclass, cmap='bwr', edgecolor='k')
 axes[0].set_title("Primary Classifier Decision Boundary")
 axes[0].set_xlabel("PCA Component 1")
 axes[0].set_ylabel("PCA Component 2")
 
-# Secondary classifier plot
+# Secondary classifier
 axes[1].contourf(xx, yy, Z_secondary, alpha=0.3, cmap='rainbow')
 scatter = axes[1].scatter(X_2d[:, 0], X_2d[:, 1], c=training_sclass, cmap='rainbow', edgecolor='k')
 axes[1].set_title("Secondary Classifier Decision Boundary")
 axes[1].set_xlabel("PCA Component 1")
 axes[1].set_ylabel("PCA Component 2")
 
-# Legend for secondary classes
+# Add legend for secondary classes
 legend1 = axes[1].legend(*scatter.legend_elements(), title="Classes")
 axes[1].add_artist(legend1)
 
