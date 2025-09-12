@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score # For scoring the model's prediction 
 from sentence_transformers import SentenceTransformer # Importing the LLM, can be seen on line 22.
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 
 # Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
