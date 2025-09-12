@@ -298,4 +298,12 @@ class TextClassifier:
 pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
 statement = st.text_input("Enter a statment to the system for classification")
 if st.button("Classify"):
-            st.markdown(pipeline.predict(statement))
+    # Get predictions from your pipeline
+    preds = pipeline.predict(statement)  # e.g., ['History', 'Research/Informative']
+
+    # Ensure it's a list of Python strings
+    preds_clean = [str(p) for p in preds]
+
+    # Join into a nice string for display
+    st.markdown("**Predictions:** " + ", ".join(preds_clean))
+
