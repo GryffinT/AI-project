@@ -1,5 +1,5 @@
 
-            # Neccisary dependencies
+# Neccisary dependencies
 import os
 import streamlit as st
 from matplotlib.lines import Line2D
