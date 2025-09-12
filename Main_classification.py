@@ -18,10 +18,7 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
 
-            # Training and testing data, Dict of Dict, Text -> Primary classification -> Secondary classification
-            # subsequent (tertiary, quartinary, etc) classifications can be added following the format and adjusting accordingly
-
-            # LLM model initiation through SentenceTransformers
+# LLM model initiation through SentenceTransformers
 # model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2') I tried using this but I cant ping them so I have to do it manually, the following code is taken from their page for this model.
 #Mean Pooling - Take attention mask into account for correct averaging
 def mean_pooling(model_output, attention_mask):
@@ -49,103 +46,103 @@ embeddings = embeddings.cpu().numpy()  # Convert torch tensor to numpy array
 
 
 
-            # Filling texts variable by compiling a list of the keys from the data dict, such that the list is composed of the sentences.
+# Filling texts variable by compiling a list of the keys from the data dict, such that the list is composed of the sentences.
 
 #texts = list(data.keys()) # done above
 
-            # Actually looks like: ["What is Python?", "Who was Ghengis Khan?", "How can I study more effectively?", ...]
+# Actually looks like: ["What is Python?", "Who was Ghengis Khan?", "How can I study more effectively?", ...]
 
-            # Creating the embeddings, this uses the LLM from above through SentenceTransoformers to create dense vector arrays rather than sparse ones (TF-IDF) such that all values are non-zero floats, they're also NumPy arrays!
-            # This could potentially be an issue in that the dense vector arrays have higher memory usage than sparse.
-            # Also the encoded vectors are 2D, such that similar components are close in vector space for semantically similar sentences (clustered), on a 384-dimensional vector (READ).
+# Creating the embeddings, this uses the LLM from above through SentenceTransoformers to create dense vector arrays rather than sparse ones (TF-IDF) such that all values are non-zero floats, they're also NumPy arrays!
+# This could potentially be an issue in that the dense vector arrays have higher memory usage than sparse.
+# Also the encoded vectors are 2D, such that similar components are close in vector space for semantically similar sentences (clustered), on a 384-dimensional vector (READ).
 
 #embeddings = model.encode(texts)  done above
 
-            # This turns the data texts into this:
-            # embeddings =
-            #array([
-            # [ 0.12, -0.34,  0.88, ...,  0.05],  # "What is Python?"
-            # [ 0.09, -0.30,  0.80, ...,  0.02],  # "Who was Ghengis Khan?"
-            # [ 0.50,  0.12, -0.20, ...,  0.11],  # "How can I study more effectively?"
-            # [ 0.48,  0.10, -0.22, ...,  0.08],  # "What time should I go to bed?"
-            # [ 0.15, -0.20,  0.95, ...,  0.12],  # "Whats the factored form of 2x^2 + 3x - 5"
-            # [ 0.18, -0.18,  0.92, ...,  0.09]   # "How can I solve for x in 7x + 8 = 5"
-            #])
+# This turns the data texts into this:
+# embeddings =
+#array([
+# [ 0.12, -0.34,  0.88, ...,  0.05],  # "What is Python?"
+# [ 0.09, -0.30,  0.80, ...,  0.02],  # "Who was Ghengis Khan?"
+# [ 0.50,  0.12, -0.20, ...,  0.11],  # "How can I study more effectively?"
+# [ 0.48,  0.10, -0.22, ...,  0.08],  # "What time should I go to bed?"
+# [ 0.15, -0.20,  0.95, ...,  0.12],  # "Whats the factored form of 2x^2 + 3x - 5"
+# [ 0.18, -0.18,  0.92, ...,  0.09]   # "How can I solve for x in 7x + 8 = 5"
+#])
 
-            # You can see that sentences with similar classifications are given ~similar values across sections (vertically).
-            # Note thanks Chat-GPT for encoding the embeddings for me for this example!
+# You can see that sentences with similar classifications are given ~similar values across sections (vertically).
+# Note thanks Chat-GPT for encoding the embeddings for me for this example!
 
-            # Pretty standard stuff here, list comprehension that gets all of the values of the data dict at keys "pclass", effectivley aggregating a pclass list.
+# Pretty standard stuff here, list comprehension that gets all of the values of the data dict at keys "pclass", effectivley aggregating a pclass list.
 
 primary_labels = [document["pclass"] for document in data.values()]
 
-            # looks like: ["Computer Science", "History", "Self Help", ...]
+# looks like: ["Computer Science", "History", "Self Help", ...]
 
-            # Again, the same thing just for sclass this time.
+# Again, the same thing just for sclass this time.
 
 secondary_labels = [document["sclass"] for document in data.values()]
 
-            # Looks like: ["Research/Informative", "Research/Informative", "Advice/Guidance", ...]
+# Looks like: ["Research/Informative", "Research/Informative", "Advice/Guidance", ...]
 
-            # Also for clarity, either could be re-written as:
-            #
-            # primary_labels = []
-            # for document in data.values():
-            #     primary_labels.append(document["pclass"])
-            #
-            # I used primary_labels as the example but you could also do secondary, here document is an arbitrary iterator variable and "pclass" is the key.
-            #
+# Also for clarity, either could be re-written as:
+#
+# primary_labels = []
+# for document in data.values():
+#     primary_labels.append(document["pclass"])
+#
+# I used primary_labels as the example but you could also do secondary, here document is an arbitrary iterator variable and "pclass" is the key.
+#
 
-            # Yay! More ML stuff, basically this is a split of the data from the data dict into training and testing portions.
-            # You can see that it defines and fills the variables, "training_text", "testing_text", "training_pclass", "training_sclass", and "testing_sclass".
-            # It fills those variables with a random shuffle (sort of random, the seed is 42, this can be seen in random_state=42) of the data from the data dict's labels as well as the embeddings (line 35)
-            # Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
-            #  assigning 50% of the data to training and 50% of the data to testing.
+# Yay! More ML stuff, basically this is a split of the data from the data dict into training and testing portions.
+# You can see that it defines and fills the variables, "training_text", "testing_text", "training_pclass", "training_sclass", and "testing_sclass".
+# It fills those variables with a random shuffle (sort of random, the seed is 42, this can be seen in random_state=42) of the data from the data dict's labels as well as the embeddings (line 35)
+# Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
+#  assigning 50% of the data to training and 50% of the data to testing.
 
 training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(embeddings, primary_labels, secondary_labels, test_size=.1, random_state=42)
 
-            # I would show what it looks like but it'd be a massive pain..
+# I would show what it looks like but it'd be a massive pain..
 
-            # Initiating the primary classifier, it uses LogisticRegression (sklearn.linear_mode, line 4) to map the input features to the class probabilities, being a fancy abstract-dimension and all (line 33).
-            # The maximum # of optimization steps to take is 500 as per the max_iter=500 parameter, but it will stop short if the weights converge.
-            # it's then fit to the training text and training primary classifications to... train off of.
-            # Note, .fit loosely translates to "learn from" which I find easier, or more precisely "optimizes the weights of the logistic regression model to minimize classification error", thanks Chatty.
-            # So basically its learning where to plot and cluster it's weights/classifications based off of the contents of the training_text and training_pclass (line 68). Simple right?
+# Initiating the primary classifier, it uses LogisticRegression (sklearn.linear_mode, line 4) to map the input features to the class probabilities, being a fancy abstract-dimension and all (line 33).
+# The maximum # of optimization steps to take is 500 as per the max_iter=500 parameter, but it will stop short if the weights converge.
+# it's then fit to the training text and training primary classifications to... train off of.
+# Note, .fit loosely translates to "learn from" which I find easier, or more precisely "optimizes the weights of the logistic regression model to minimize classification error", thanks Chatty.
+# So basically its learning where to plot and cluster it's weights/classifications based off of the contents of the training_text and training_pclass (line 68). Simple right?
 
 clf_primary = LogisticRegression(max_iter=500)
 clf_primary.fit(training_text, training_pclass) # Hey, Primary Classifier, learn (recognize the patterns) from this training text EMBED I have and each vector's corresponding label from training_pclass.
 
-            # Okay, so this really is just the same thing as the primary classifier, but it does it for the secondary classifications and uses sclass rather than pclass, for further detail refer to line 72.
+# Okay, so this really is just the same thing as the primary classifier, but it does it for the secondary classifications and uses sclass rather than pclass, for further detail refer to line 72.
 
 clf_secondary = LogisticRegression(max_iter=500)
 clf_secondary.fit(training_text, training_sclass) # Comment on line 79
 
-            # Initiates the primary predictor, this calls on the primary classifier to predict through .predict using the testing text as a paramenter!
-            # So, I dont completeley get it... but I think it calculates the linear scores along the LogReg line from the weights/biases and chooses the highest probability class.
-                # Afternote: the input embedding is converted into a linear score for each class
-                # (by taking the dot product with each class's learned weight vector and adding the bias). 
-                # These scores are then converted into probabilities via softmax, 
-                # and the class with the highest probability is chosen as the predicted label.
-            # It then chooses the closest, and highest classification to the position found for the input text and chooses that classification.
-            # basically, it finds where it WOULD plot the input data in following with its training data, and then chooses the highest classifications that have the closest distance from the weights as the chosen point.
-            # This uses fancy math like softmax functions, which I know conceptually but not fundamentally, so I'm not terribly familiar.
-            # If you want a better description here's GPT's take:
+# Initiates the primary predictor, this calls on the primary classifier to predict through .predict using the testing text as a paramenter!
+# So, I dont completeley get it... but I think it calculates the linear scores along the LogReg line from the weights/biases and chooses the highest probability class.
+# Afternote: the input embedding is converted into a linear score for each class
+# (by taking the dot product with each class's learned weight vector and adding the bias). 
+# These scores are then converted into probabilities via softmax, 
+# and the class with the highest probability is chosen as the predicted label.
+# It then chooses the closest, and highest classification to the position found for the input text and chooses that classification.
+# basically, it finds where it WOULD plot the input data in following with its training data, and then chooses the highest classifications that have the closest distance from the weights as the chosen point.
+# This uses fancy math like softmax functions, which I know conceptually but not fundamentally, so I'm not terribly familiar.
+# If you want a better description here's GPT's take:
 
-            # Uses the primary classifier to predict classes for the testing embeddings.
-            # .predict() takes the testing text embeddings as input and outputs the most likely class labels.
-            # Internally, the classifier computes a score for each class (using the learned weights and biases) and applies a softmax to estimate probabilities.
-            # The class with the highest probability is chosen as the predicted label.
-            # No retraining occurs here; it just applies what the classifier learned during .fit().
+# Uses the primary classifier to predict classes for the testing embeddings.
+# .predict() takes the testing text embeddings as input and outputs the most likely class labels.
+# Internally, the classifier computes a score for each class (using the learned weights and biases) and applies a softmax to estimate probabilities.
+# The class with the highest probability is chosen as the predicted label.
+# No retraining occurs here; it just applies what the classifier learned during .fit().
 
 
 pred_primary = clf_primary.predict(testing_text) # Another mention real quick, testing_text is an embed, therefore its a dense vector array, NOT raw text, refer to lines 68, and 31.
 
-            # Secondary predictor so refer to lines 107-114.
+# Secondary predictor so refer to lines 107-114.
 
 pred_secondary = clf_secondary.predict(testing_text) # Comment on line 114.
 
-            # Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
-            # Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
+# Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
+# Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
 primary_accuracy = accuracy_score(testing_pclass, pred_primary) * 100
 secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
