@@ -6,8 +6,11 @@ from sklearn.linear_model import LogisticRegression # For the secondary and prim
 from sklearn.model_selection import train_test_split # For creating the training and testing variables/shuffling data.
 from sklearn.metrics import accuracy_score # For scoring the model's prediction accuracy at the end.
 from sentence_transformers import SentenceTransformer # Importing the LLM, can be seen on line 22.
-import pandas as pd
-            # Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+
+# Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
 from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
@@ -215,6 +218,53 @@ primary_accuracy = accuracy_score(testing_pclass, pred_primary) * 100
 secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
+
+# --- Reduce embeddings to 2D with PCA for visualization ---
+pca = PCA(n_components=2)
+X_2d = pca.fit_transform(training_text)
+
+# --- Train classifiers on reduced 2D embeddings (just for plotting) ---
+clf_primary_2d = LogisticRegression(max_iter=500).fit(X_2d, training_pclass)
+clf_secondary_2d = LogisticRegression(max_iter=500).fit(X_2d, training_sclass)
+
+# --- Grid for decision boundary ---
+x_min, x_max = X_2d[:, 0].min() - 1, X_2d[:, 0].max() + 1
+y_min, y_max = X_2d[:, 1].min() - 1, X_2d[:, 1].max() + 1
+xx, yy = np.meshgrid(np.linspace(x_min, x_max, 200),
+                     np.linspace(y_min, y_max, 200))
+
+# Predictions for primary
+Z_primary = clf_primary_2d.predict(np.c_[xx.ravel(), yy.ravel()])
+Z_primary = Z_primary.reshape(xx.shape)
+
+# Predictions for secondary
+Z_secondary = clf_secondary_2d.predict(np.c_[xx.ravel(), yy.ravel()])
+Z_secondary = Z_secondary.reshape(xx.shape)
+
+# --- Plot side by side ---
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Primary classifier plot
+axes[0].contourf(xx, yy, Z_primary, alpha=0.3, cmap='bwr')
+axes[0].scatter(X_2d[:, 0], X_2d[:, 1], c=training_pclass, cmap='bwr', edgecolor='k')
+axes[0].set_title("Primary Classifier Decision Boundary")
+axes[0].set_xlabel("PCA Component 1")
+axes[0].set_ylabel("PCA Component 2")
+
+# Secondary classifier plot
+axes[1].contourf(xx, yy, Z_secondary, alpha=0.3, cmap='rainbow')
+scatter = axes[1].scatter(X_2d[:, 0], X_2d[:, 1], c=training_sclass, cmap='rainbow', edgecolor='k')
+axes[1].set_title("Secondary Classifier Decision Boundary")
+axes[1].set_xlabel("PCA Component 1")
+axes[1].set_ylabel("PCA Component 2")
+
+# Legend for secondary classes
+legend1 = axes[1].legend(*scatter.legend_elements(), title="Classes")
+axes[1].add_artist(legend1)
+
+plt.tight_layout()
+plt.show()
+
 
 st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
 st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
