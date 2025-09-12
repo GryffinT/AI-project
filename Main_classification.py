@@ -241,9 +241,7 @@ class TextClassifier:
         }
 
 # Usage:
-test_question = ""
-while test_question != "quit":
-    pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
-    test_question = input("Enter a question to predict or type 'quit' to exit: ")
-
-    print(pipeline.predict(test_question))
+pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
+statement = st.input("Enter a statment to the system for classification")
+if st.button("Classify"):
+            st.message(pipeline.predict(statement))
