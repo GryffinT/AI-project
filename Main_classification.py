@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
-from data.py import data
+from data import data
 
 # Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
 from transformers import AutoTokenizer, AutoModel
