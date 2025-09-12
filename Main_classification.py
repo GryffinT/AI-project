@@ -248,7 +248,7 @@ handles, _ = scatter.legend_elements()
 ax.legend(handles, le.classes_, title="Classes")
 
 # Use st.pyplot(fig) to display
-st.pyplot(fig))
+st.pyplot(fig)
 
 st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
 st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
