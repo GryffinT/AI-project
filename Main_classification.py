@@ -219,6 +219,15 @@ secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
 
+# Ensure embeddings are numpy float arrays
+if not isinstance(training_text, np.ndarray):
+    training_text = np.array(training_text, dtype=np.float32)
+
+# Ensure labels are numpy arrays (int or str is fine, but consistent)
+training_pclass = np.array(training_pclass)
+training_sclass = np.array(training_sclass)
+
+
 # --- Reduce embeddings to 2D with PCA for visualization ---
 pca = PCA(n_components=2)
 X_2d = pca.fit_transform(training_text)
