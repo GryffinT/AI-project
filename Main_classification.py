@@ -220,12 +220,11 @@ secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
 
-# Ensure alignment
 n = min(len(embeddings), len(training_pclass))
 embeddings = embeddings[:n]
 labels = np.array(training_pclass[:n])
 
-# Encode string labels to integers for plotting
+# Encode string labels
 le = LabelEncoder()
 labels_encoded = le.fit_transform(labels)
 
@@ -233,25 +232,23 @@ labels_encoded = le.fit_transform(labels)
 clf_primary = LogisticRegression(max_iter=500)
 clf_primary.fit(embeddings, labels_encoded)
 
-# Reduce embeddings to 2D for plotting
-pca = PCA(n_components=2)
-X_pca = pca.fit_transform(embeddings)
+# PCA
+X_pca = PCA(n_components=2).fit_transform(embeddings)
 
-# ------------------------
-# Plotting in Streamlit
+# -------------------------------
+# Create figure explicitly
 fig, ax = plt.subplots(figsize=(8,6))
-scatter = ax.scatter(X_pca[:,0], X_pca[:,1], c=labels_encoded, cmap="tab10", alpha=0.7)
+scatter = ax.scatter(X_pca[:,0], X_pca[:,1], c=labels_encoded, cmap='tab10', alpha=0.7)
+ax.set_xlabel("PC 1")
+ax.set_ylabel("PC 2")
+ax.set_title("Logistic Regression decision space (PCA projection)")
 
-# Add legend with original class names
+# Add legend
 handles, _ = scatter.legend_elements()
 ax.legend(handles, le.classes_, title="Classes")
 
-ax.set_title("Logistic Regression decision space (PCA projection)")
-ax.set_xlabel("PC 1")
-ax.set_ylabel("PC 2")
-
-# Display in Streamlit
-st.pyplot(fig)
+# Use st.pyplot(fig) to display
+st.pyplot(fig))
 
 st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
 st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
