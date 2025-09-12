@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression # For the secondary and prim
 from sklearn.model_selection import train_test_split # For creating the training and testing variables/shuffling data.
 from sklearn.metrics import accuracy_score # For scoring the model's prediction accuracy at the end.
 from sentence_transformers import SentenceTransformer # Importing the LLM, can be seen on line 22.
-
+import pandas as pd
             # Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
 from transformers import AutoTokenizer, AutoModel
 import torch
@@ -211,12 +211,13 @@ pred_secondary = clf_secondary.predict(testing_text) # Comment on line 114.
 
             # Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
             # Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
-            
-print (f"The primary classification of {testing_text} is {pred_primary} vs {testing_pclass} and the secondary is {pred_secondary} vs {testing_sclass}")
-print(f"Primary class predictions are at {accuracy_score(testing_pclass, pred_primary) * 100}%")
-print(f"Secondary class predictions are at {accuracy_score(testing_sclass, pred_secondary) * 100}%")
+primary_accuracy = accuracy_score(testing_pclass, pred_primary) * 100
+secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
-# USER INPUT STUFF!
+st.title("AI Project")
+
+st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
+st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
 
 class TextClassifier:
     def __init__(self, tokenizer, model, clf_primary, clf_secondary):
