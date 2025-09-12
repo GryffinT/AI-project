@@ -219,23 +219,31 @@ secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
 
 st.title("AI Project")
 
-# Ensure alignment (truncate embeddings if needed)
+# Ensure alignment
 n = min(len(embeddings), len(training_pclass))
 embeddings = embeddings[:n]
 labels = np.array(training_pclass[:n])
 
+# Encode string labels into numbers for plotting
+le = LabelEncoder()
+labels_encoded = le.fit_transform(labels)
+
 # Fit classifier
 clf_primary = LogisticRegression(max_iter=500)
-clf_primary.fit(embeddings, labels)
+clf_primary.fit(embeddings, labels_encoded)
 
 # Reduce to 2D for plotting
 pca = PCA(n_components=2)
 X_pca = pca.fit_transform(embeddings)
 
-# Plot
+# Plot scatter with numeric labels
 plt.figure(figsize=(8,6))
-scatter = plt.scatter(X_pca[:,0], X_pca[:,1], c=labels, cmap="viridis", alpha=0.7)
-plt.legend(*scatter.legend_elements(), title="Classes")
+scatter = plt.scatter(X_pca[:,0], X_pca[:,1], c=labels_encoded, cmap="tab10", alpha=0.7)
+
+# Add legend with original class names
+handles, _ = scatter.legend_elements()
+plt.legend(handles, le.classes_, title="Classes")
+
 plt.title("Logistic Regression decision space (PCA projection)")
 plt.xlabel("PC 1")
 plt.ylabel("PC 2")
