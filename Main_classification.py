@@ -291,9 +291,8 @@ class TextClassifier:
     def predict(self, texts):
         emb = self.embed(texts)
         return {
-            "primary": self.clf_primary.predict(emb)[0],
-            "secondary": self.clf_secondary.predict(emb)[0]
-        }
+            [self.clf_primary.predict(emb)(0), self.clf_secondary.predict(emb)(0)]
+        }            
 
 # Usage:
 pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
