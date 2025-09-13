@@ -42,8 +42,8 @@ args = TrainingArguments( # Arguments for the training loop, how it should behav
 trainer = Trainer(
   model=model = AutoModelForCausalLM.from_pretrained("gpt2"), # gets the transformer model.
   args = args, # sets the training loop's arguments to the ones set above.
-  train_dataset = tokenized[training], # sets the training dataset to the training examples from the tokenized dataset.
-  eval_dataset = tokenized[validation], #  ^ 
+  train_dataset = tokenized["train"], # sets the training dataset to the training examples from the tokenized dataset.
+  eval_dataset = tokenized["validation"], #  ^ 
   tokenizer = tokenizer # sets the loop's tokenizer to our predefined tokenizer".
 )
 
@@ -51,7 +51,7 @@ trainer.train() # runs the training loop
 trainer.save_model("text_generator") # saves the model's progress wthin the text generator file.
 tokenizer.save_pretrained("text_generator") # saves the model's config and vocab to the text generator file aswell. 
 
-generator = pipeline("text-generation", model="text_generator", tokenizer="text_generator", device=1) # establishes the transformer pipeline in text generation oode using the text_generator model and tokenizer on the CPU.
+generator = pipeline("text-generation", model="text_generator", tokenizer="text_generator", device=0) # establishes the transformer pipeline in text generation oode using the text_generator model and tokenizer on the GPU.
 
 def output(prompt):
   out = generator( # output of the pipeline =.
