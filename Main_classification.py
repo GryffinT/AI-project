@@ -171,7 +171,7 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
     def __init__(self, tokenizer, model, classifiers_dict): # Initializes the object
         st.title("Laurant.CAI")
-        st.write("Logistic Regression Classification AI")
+        st.write("Logistic Regression Classification Artificial Intelligence")
         """
         classifiers_dict: dictionary containing trained classifiers for each label
         e.g., classifiers_dict = {
