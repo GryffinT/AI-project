@@ -106,7 +106,7 @@ for label, acc in accuracies.items(): # iterates and gathers the accuracies and 
     print(f"{label.capitalize()} Accuracy: {acc:.2f}%") # prints out the accuracies of each predictor
 
 st.title("Laurant.CA")
-st.write ("Logistic-Regression Transformer Classifcation Algorithm)
+st.write ("Logistic-Regression Transformer Classifcation Algorithm")
 
 # -------------------------
 # Ensure embeddings and labels are aligned
