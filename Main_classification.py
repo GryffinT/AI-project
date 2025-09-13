@@ -137,6 +137,8 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
     # Render sidebar using persistent data
     with st.sidebar:
+        st.title("Laurant.CAI")
+        st.write("Logistic Regression Classification Artificial Intelligence")
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         axes[0].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
                         c=st.session_state.p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
@@ -170,8 +172,6 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
     def __init__(self, tokenizer, model, classifiers_dict): # Initializes the object
-        st.title("Laurant.CAI")
-        st.write("Logistic Regression Classification Artificial Intelligence")
         """
         classifiers_dict: dictionary containing trained classifiers for each label
         e.g., classifiers_dict = {
