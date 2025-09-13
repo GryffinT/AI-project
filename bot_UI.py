@@ -2,6 +2,7 @@ import Main_classification
 import classification_data
 import streamlit as st
 from Main_classification import render_sidebar
+from Main_generative import output
 
 # -------------------------
 # Sidebar (persistent)
@@ -36,7 +37,8 @@ if prompt := st.chat_input("Ask Laurent anything."):
 
     with st.chat_message("assistant"):
         classifications = Main_classification.pipeline.predict(prompt)
-        response = f"The classifications are: {classifications}."
+        generation = output(prompt)
+        response = f"The classifications are: {classifications}, and my answer is {generation}"
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
 
