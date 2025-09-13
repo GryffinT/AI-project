@@ -16,8 +16,6 @@ render_sidebar(
 # -------------------------
 # Chat panel
 # -------------------------
-st.header("Chat with your LLM")
-user_input = st.text_input("Enter a message:")
 
 if st.button("Send") and user_input:
     response = "This is a dummy LLM response"  # Replace with your LLM function
