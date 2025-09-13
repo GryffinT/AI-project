@@ -1,4 +1,3 @@
-
 # Neccisary dependencies
 import os
 import streamlit as st
@@ -13,7 +12,6 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 from classification_data import data
-# Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
 from transformers import AutoTokenizer, AutoModel
 import torch
 import torch.nn.functional as F
@@ -43,36 +41,6 @@ embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
 # Normalize embeddings
 embeddings = F.normalize(embeddings, p=2, dim=1)
 embeddings = embeddings.cpu().numpy()  # Convert torch tensor to numpy array
-
-
-
-# Filling texts variable by compiling a list of the keys from the data dict, such that the list is composed of the sentences.
-
-#texts = list(data.keys()) # done above
-
-# Actually looks like: ["What is Python?", "Who was Ghengis Khan?", "How can I study more effectively?", ...]
-
-# Creating the embeddings, this uses the LLM from above through SentenceTransoformers to create dense vector arrays rather than sparse ones (TF-IDF) such that all values are non-zero floats, they're also NumPy arrays!
-# This could potentially be an issue in that the dense vector arrays have higher memory usage than sparse.
-# Also the encoded vectors are 2D, such that similar components are close in vector space for semantically similar sentences (clustered), on a 384-dimensional vector (READ).
-
-#embeddings = model.encode(texts)  done above
-
-# This turns the data texts into this:
-# embeddings =
-#array([
-# [ 0.12, -0.34,  0.88, ...,  0.05],  # "What is Python?"
-# [ 0.09, -0.30,  0.80, ...,  0.02],  # "Who was Ghengis Khan?"
-# [ 0.50,  0.12, -0.20, ...,  0.11],  # "How can I study more effectively?"
-# [ 0.48,  0.10, -0.22, ...,  0.08],  # "What time should I go to bed?"
-# [ 0.15, -0.20,  0.95, ...,  0.12],  # "Whats the factored form of 2x^2 + 3x - 5"
-# [ 0.18, -0.18,  0.92, ...,  0.09]   # "How can I solve for x in 7x + 8 = 5"
-#])
-
-# You can see that sentences with similar classifications are given ~similar values across sections (vertically).
-# Note thanks Chat-GPT for encoding the embeddings for me for this example!
-
-# Pretty standard stuff here, list comprehension that gets all of the values of the data dict at keys "pclass", effectivley aggregating a pclass list.
 
 # ======= Prepare label arrays =======
 primary_labels = [doc["pclass"] for doc in data.values()]
