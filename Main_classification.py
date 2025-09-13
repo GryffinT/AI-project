@@ -158,7 +158,7 @@ pred_secondary = clf_secondary.predict(testing_text) # Comment on line 114.
 
 pred_profanity = clf_profanity.predict(testing_text)
 pred_writing = clf_writing.predict(testing_text)
-pred_context clf_context.predict(testing_text)
+pred_context = clf_context.predict(testing_text)
 
 # Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
 # Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
