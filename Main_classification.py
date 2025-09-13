@@ -144,7 +144,7 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
     # Render sidebar using persistent data
     with st.sidebar:
-        st.markdown('<h1 style="font-size:30px">Laurant.CAI</h1>', unsafe_allow_html=True)
+        st.markdown('<h1 style="font-size:60px">Laurant.CAI</h1>', unsafe_allow_html=True)
         st.markdown('<h1 style="font-size:20px">Logistic Regression Classification Artificial Intelligence</h1>', unsafe_allow_html=True)
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         axes[0].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
