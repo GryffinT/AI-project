@@ -71,7 +71,7 @@ training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_sp
     context_labels, # line 58
     primary_labels, # line 51
     secondary_labels, # line 52
-    test_size=0.1, # 10% of the shuffled data is reserved for the training datasets to gauge model success.
+    test_size=0.25, # 25% of the shuffled data is reserved for the training datasets to gauge model success.
     random_state=42, # randomized shuffle seed.
     stratify=profane_labels,  # ensures at least some '1' and '0' in training set
 )
