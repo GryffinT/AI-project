@@ -165,7 +165,7 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
         # Display persistent accuracies
         for label, acc in st.session_state.accuracies.items():
-            st.write(f"{label} Accuracy: {acc:.2f}%")
+            st.progress(acc, text=f"{label} Progress")
 
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
