@@ -105,75 +105,31 @@ for name, (y_train, y_test) in label_sets.items(): #  Iterates over the label_se
 for label, acc in accuracies.items(): # iterates and gathers the accuracies and their respective predictors from before
     print(f"{label.capitalize()} Accuracy: {acc:.2f}%") # prints out the accuracies of each predictor
 
-# -------------------------
+
 # ====== Persist embeddings and labels in session state ======
-if "embeddings_plot" not in st.session_state:
-    n = min(len(training_text), len(training_pclass), len(training_sclass))
-    st.session_state.embeddings_plot = np.array(training_text[:n])
-    st.session_state.p_labels = np.array(training_pclass[:n])
-    st.session_state.s_labels = np.array(training_sclass[:n])
+def init_session_state(training_text, training_pclass, training_sclass):
+    # Embeddings and labels
+    if "embeddings_plot" not in st.session_state:
+        n = min(len(training_text), len(training_pclass), len(training_sclass))
+        st.session_state.embeddings_plot = np.array(training_text[:n])
+        st.session_state.p_labels = np.array(training_pclass[:n])
+        st.session_state.s_labels = np.array(training_sclass[:n])
 
-# Encode labels if not already stored
-if "p_labels_encoded" not in st.session_state:
-    le_p = LabelEncoder()
-    st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
-    st.session_state.le_p_classes = le_p.classes_
+    # Encode labels
+    if "p_labels_encoded" not in st.session_state:
+        le_p = LabelEncoder()
+        st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
+        st.session_state.le_p_classes = le_p.classes_
 
-if "s_labels_encoded" not in st.session_state:
-    le_s = LabelEncoder()
-    st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
-    st.session_state.le_s_classes = le_s.classes_
+    if "s_labels_encoded" not in st.session_state:
+        le_s = LabelEncoder()
+        st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
+        st.session_state.le_s_classes = le_s.classes_
 
-# Reduce embeddings to 2D with PCA (persist result)
-if "X_pca" not in st.session_state:
-    st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
+    # PCA
+    if "X_pca" not in st.session_state:
+        st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
 
-# ====== Plot ======
-with st.sidebar:
-    fig, axes = plt.subplots(1, 2, figsize=(14,6))
-
-    # Primary classifier scatter
-    scatter1 = axes[0].scatter(
-        st.session_state.X_pca[:,0], st.session_state.X_pca[:,1],
-        c=st.session_state.p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k'
-    )
-    axes[0].set_title("Primary Classifier")
-    axes[0].set_xlabel("PC 1")
-    axes[0].set_ylabel("PC 2")
-
-    # Legend for primary
-    colors = plt.cm.tab10(np.linspace(0, 1, len(st.session_state.le_p_classes)))
-    legend_elements = [
-        Line2D([0], [0], marker='o', color='w', label=cls,
-               markerfacecolor=colors[i], markersize=10)
-        for i, cls in enumerate(st.session_state.le_p_classes)
-    ]
-    axes[0].legend(handles=legend_elements, title="Classes")
-
-    # Secondary classifier scatter
-    scatter2 = axes[1].scatter(
-        st.session_state.X_pca[:,0], st.session_state.X_pca[:,1],
-        c=st.session_state.s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k'
-    )
-    axes[1].set_title("Secondary Classifier")
-    axes[1].set_xlabel("PC 1")
-    axes[1].set_ylabel("PC 2")
-
-    # Legend for secondary
-    colors2 = plt.cm.tab20(np.linspace(0, 1, len(st.session_state.le_s_classes)))
-    legend_elements2 = [
-        Line2D([0], [0], marker='o', color='w', label=cls,
-               markerfacecolor=colors2[i], markersize=10)
-        for i, cls in enumerate(st.session_state.le_s_classes)
-    ]
-    axes[1].legend(handles=legend_elements2, title="Classes")
-
-    plt.tight_layout()
-    st.pyplot(fig)
-
-    # Display accuracies dynamically
-    for label, acc in accuracies.items():
-        st.write(f"The model's {label} accuracy is operating at {acc:.2f}%")
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
     def __init__(self, tokenizer, model, classifiers_dict): # Initializes the object
