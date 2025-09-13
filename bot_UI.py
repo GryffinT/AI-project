@@ -18,7 +18,7 @@ render_sidebar(
 # -------------------------
 
 st.markdown('<h1 style="font-size:70px">Welcome, User.</h1>', unsafe_allow_html=True)
-st.markdown('<h1 style="font-size:50px">What's on today's agenda?</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="font-size:50px">What\'s on today\'s agenda?</h1>', unsafe_allow_html=True)
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
