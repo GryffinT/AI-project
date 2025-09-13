@@ -56,5 +56,15 @@ data = {
     "You're my study buddy. Teach me the basics of probability for our statistics class": {"pclass": "Mathematics", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "Yes"},
     "You're my programming partner. Guide me through debugging this Python script": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "Yes"},
     "You're a science fair judge. Evaluate my project on photosynthesis and offer suggestions": {"pclass": "Science", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "Yes"},
-    "You're a literature professor. Discuss the use of allegory in 'Animal Farm' with your class": {"pclass": "English", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "Yes"}
+    "You're a literature professor. Discuss the use of allegory in 'Animal Farm' with your class": {"pclass": "English", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
+    "Summarize the main causes of World War II": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Write an essay on the importance of biodiversity": {"pclass": "Science", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Describe the process of mitosis": {"pclass": "Science", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Explain the significance of the Industrial Revolution": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Write a report on renewable energy sources": {"pclass": "Engineering", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Summarize the plot of '1984' by George Orwell": {"pclass": "English", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Explain how a hydraulic lift works": {"pclass": "Engineering", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Write a research summary on the effects of pollution": {"pclass": "Science", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Describe the basic principles of calculus": {"pclass": "Mathematics", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Write an essay on the impact of the internet on modern communication": {"pclass": "Technology", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"}
 }
