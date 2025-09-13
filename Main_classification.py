@@ -42,65 +42,77 @@ embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
 embeddings = F.normalize(embeddings, p=2, dim=1)
 embeddings = embeddings.cpu().numpy()  # Convert torch tensor to numpy array
 
-# ======= Prepare label arrays =======
-primary_labels = [doc["pclass"] for doc in data.values()]
-secondary_labels = [doc["sclass"] for doc in data.values()]
+# End of embeds
 
-profane_labels = [1 if doc["Profane"]=="Yes" else 0 for doc in data.values()]
-writing_labels = [1 if doc["Writing"]=="Yes" else 0 for doc in data.values()]
-context_labels = [1 if doc["Context"]=="Yes" else 0 for doc in data.values()]
+# ======= Prepare label arrays =======
+
+# Multi-class labels (LogReg)
+
+primary_labels = [doc["pclass"] for doc in data.values()] # List comprehension to initialize the primary_labels list and then populate it with all of the values associated with the pclass label from the data.
+secondary_labels = [doc["sclass"] for doc in data.values()] # Same as the primary labels list, just sclass this time.
+
+# Binary labels
+
+profane_labels = [1 if doc["Profane"]=="Yes" else 0 for doc in data.values()] # List comprehension, initializes profane_labels list and populates each index with either 1, if the value of "Profane" is "Yes" or 0 if "No"
+writing_labels = [1 if doc["Writing"]=="Yes" else 0 for doc in data.values()] # Same as previous but for "Writing".
+context_labels = [1 if doc["Context"]=="Yes" else 0 for doc in data.values()] # ^ ("Context")
 
 # ======= Train/test split =======
+
+# Test/Train/Split, shuffles the data give, so the embedded text stored in "training_text", multi-class labels from above and the dummy labels as well.
+stratify_labels = np.array([f"{p}-{w}-{c}" for p, w, c in zip(profane_labels, writing_labels, context_labels)])
 # For binary labels, stratify using one of them to ensure class balance
-training_text, testing_text, training_profanity, testing_profanity, \
+training_text, testing_text, training_profanity, testing_profanity, \ #
 training_writing, testing_writing, training_context, testing_context, \
 training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(
-    embeddings,
-    profane_labels,
-    writing_labels,
-    context_labels,
-    primary_labels,
-    secondary_labels,
-    test_size=0.1,
-    random_state=42,
-    stratify=profane_labels  # ensures at least some '1' and '0' in training set
+    embeddings, # Embedded text from the embed portion.
+    profane_labels, # line 56
+    writing_labels, # line 57
+    context_labels, # line 58
+    primary_labels, # line 51
+    secondary_labels, # line 52
+    test_size=0.1, # 10% of the shuffled data is reserved for the training datasets to gauge model success.
+    random_state=42, # randomized shuffle seed.
+    stratify=profane_labels,  # ensures at least some '1' and '0' in training set
 )
 
 # ======= Setup label dictionary =======
-label_sets = {
-    "primary": (training_pclass, testing_pclass),
-    "secondary": (training_sclass, testing_sclass),
-    "profanity": (training_profanity, testing_profanity),
-    "writing": (training_writing, testing_writing),
-    "context": (training_context, testing_context)
-}
 
-classifiers = {}
-accuracies = {}
+# This is kind of just clean up so that I can ref the labels AND have the ability to easily add new features.
+
+label_sets = { 
+    "primary": (training_pclass, testing_pclass), # Primary labels are stored in the training_pclass set and testing p_class set
+    "secondary": (training_sclass, testing_sclass), # ^ (sclass)
+    "profanity": (training_profanity, testing_profanity), # ^ (profanity)
+    "writing": (training_writing, testing_writing), # ^ (writing)
+    "context": (training_context, testing_context) # ^ (context)
+} 
+
+classifiers = {} # initialize empy classifiers dict
+accuracies = {} # ^ accuracies
 
 # ======= Train classifiers =======
-for name, (y_train, y_test) in label_sets.items():
-    # Use DummyClassifier if only one class exists
-    if len(np.unique(y_train)) > 1:
-        clf = LogisticRegression(max_iter=500)
-    else:
-        clf = DummyClassifier(strategy="constant", constant=y_train[0])
+for name, (y_train, y_test) in label_sets.items(): #  Iterates over the label_sets dict and gets the labels for a given label set (Primary, Secondary, etc)
+    clf = LogisticRegression(max_iter=500) # Run the LogReg with a maximum iteration of 500 times, which it will stop short if the loss converges early.
+
+    clf.fit(training_text, y_train) # Classifier, learn from (fit) the training_text and the training labels.
+    pred = clf.predict(testing_text) # Now, classifier, predict from this testing text (10% atm)
     
-    clf.fit(training_text, y_train)
-    pred = clf.predict(testing_text)
-    
-    classifiers[name] = clf
-    accuracies[name] = accuracy_score(y_test, pred) * 100
+    classifiers[name] = clf # This classifier (Primary, secondary, whatever) is saved to the list classifers under the name of name (secondary, profanity, etc)
+    accuracies[name] = accuracy_score(y_test, pred) * 100 # Just a calculation to find accuracy, compares the testing labels to the predicted labels. Then saves the accuracies to the accuracies list under the pred's name
 
 # ======= Print results =======
-for label, acc in accuracies.items():
-    print(f"{label.capitalize()} Accuracy: {acc:.2f}%")
+for label, acc in accuracies.items(): # iterates and gathers the accuracies and their respective predictors from before
+    print(f"{label.capitalize()} Accuracy: {acc:.2f}%") # prints out the accuracies of each predictor
 
 st.title("AI Project")
 
 # -------------------------
 # Ensure embeddings and labels are aligned
-n = min(len(training_text), len(training_pclass), len(training_sclass))
+
+# Confession time, I'm not so well versed in this graphing stuff and... kinda... didint write it... its only temporary for diagnostic purposes so... yeah.
+
+n = min(len(training_text), len(training_pclass), len(training_sclass)) #
 embeddings_plot = np.array(training_text[:n])
 p_labels = np.array(training_pclass[:n])
 s_labels = np.array(training_sclass[:n])
@@ -153,12 +165,12 @@ plt.tight_layout()
 st.pyplot(fig)
 
 # ======= Display accuracies dynamically =======
-for label, acc in accuracies.items():
-    st.write(f"The model's {label} accuracy is operating at {acc:.2f}%")
+for label, acc in accuracies.items(): # gets the accuracy rates per predictor just like before
+    st.write(f"The model's {label} accuracy is operating at {acc:.2f}%") # displays the accuracy of each predictor as a writeup on streamlit's interface.
 
 # ======= TextClassifier =======
-class TextClassifier:
-    def __init__(self, tokenizer, model, classifiers_dict):
+class TextClassifier: # OOP python... scary. This makes the TextClassifier class
+    def __init__(self, tokenizer, model, classifiers_dict): # Initializes the object
         """
         classifiers_dict: dictionary containing trained classifiers for each label
         e.g., classifiers_dict = {
@@ -169,31 +181,34 @@ class TextClassifier:
             'context': clf_context
         }
         """
-        self.tokenizer = tokenizer
-        self.model = model
-        self.classifiers = classifiers_dict
+        self.tokenizer = tokenizer # Self reference to the tokenizer, basically linking it to the tokenizer from before
+        self.model = model # ^
+        self.classifiers = classifiers_dict # ^ 
 
-    def embed(self, texts):
-        encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt')
-        with torch.no_grad():
-            model_output = self.model(**encoded_input)
-        embeddings = mean_pooling(model_output, encoded_input['attention_mask'])
-        embeddings = F.normalize(embeddings, p=2, dim=1)
-        return embeddings.cpu().numpy()
+    def embed(self, texts): # re-worked embed function within the class to handle user input. 
+        encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt') # encodes the input text with padding, truncation, and as a PyTorch Tensor (fancy vector array)
+        with torch.no_grad(): # Within the torch context manager dont track gradients (saves memory)
+            model_output = self.model(**encoded_input) # the output, passes the encoded tensor from before into the LogReg model, also ** means argument unpacking so it shows the content, kinda like a file unzip.
+        embeddings = mean_pooling(model_output, encoded_input['attention_mask']) # Pretty much just averages the attention masked encoded inputs and the model outputs right above it, more on this below.
+        # The attention_masked means that during the encoding process, because we used a transformer the semantic meaning of the words were only RETROSPECIVE. so meaning was correlated retrospectivley.
+        # The model_output is the result of passing the input through the LogReg
+        # the mean_pooling is actually just gathering the mean/average of these values to save computational power at the cost of accuracy
+        embeddings = F.normalize(embeddings, p=2, dim=1) # L2 normalization of the embed tensors into magnitude 1 vectors.
+        return embeddings.cpu().numpy() # return the embeddings in NumPy format on the CPU.
 
-    def predict(self, texts):
-        emb = self.embed([texts])  # Wrap text in a list to handle single input
-        preds = {}
-        for name, clf in self.classifiers.items():
-            pred = clf.predict(emb)[0]
-            preds[name] = str(pred)
+    def predict(self, texts): # Predict function
+        emb = self.embed([texts])  # Wrap text in a list to handle single input 
+        preds = {} # Empty prediction list.
+        for name, clf in self.classifiers.items(): # Iterator that for each name and classifier in the classifiers it makes a prediction for the respective classifiers using the embed.
+            pred = clf.predict(emb)[0] # ^
+            preds[name] = str(pred) # appends the prediction as a string to the preds list under the respective name.
         # Return a formatted string
-        return ", ".join([f"{k}: {v}" for k, v in preds.items()])
+        return ", ".join([f"{k}: {v}" for k, v in preds.items()]) # returns the joined predictions from the preds list 
 
 # ======= Usage in Streamlit =======
-pipeline = TextClassifier(tokenizer, model, classifiers)
+pipeline = TextClassifier(tokenizer, model, classifiers) # establishes the pipeline (not really though)
 
-statement = st.text_input("Enter a statement to the system for classification")
+statement = st.text_input("Enter a statement to the system for classification") # user input
 if st.button("Classify"):
     classifications = pipeline.predict(statement)
     st.markdown(f"The classifications are: {classifications}.")
