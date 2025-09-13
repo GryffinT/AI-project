@@ -8,11 +8,11 @@ from sklearn.model_selection import train_test_split # For creating the training
 from sklearn.metrics import accuracy_score # For scoring the model's prediction accuracy at the end.
 from sentence_transformers import SentenceTransformer # Importing the LLM, can be seen on line 22.
 import numpy as np
+from sklearn.dummy import DummyClassifier
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import PCA
 from classification_data import data
-
 # Snatched these imports from HuggingFace directly, cause I cant ping them for some reason.
 from transformers import AutoTokenizer, AutoModel
 import torch
@@ -74,135 +74,88 @@ embeddings = embeddings.cpu().numpy()  # Convert torch tensor to numpy array
 
 # Pretty standard stuff here, list comprehension that gets all of the values of the data dict at keys "pclass", effectivley aggregating a pclass list.
 
-primary_labels = [document["pclass"] for document in data.values()]
+# ======= Prepare label arrays =======
+primary_labels = [doc["pclass"] for doc in data.values()]
+secondary_labels = [doc["sclass"] for doc in data.values()]
 
-# looks like: ["Computer Science", "History", "Self Help", ...]
+profane_labels = [1 if doc["Profane"]=="Yes" else 0 for doc in data.values()]
+writing_labels = [1 if doc["Writing"]=="Yes" else 0 for doc in data.values()]
+context_labels = [1 if doc["Context"]=="Yes" else 0 for doc in data.values()]
 
-profane_labels = [document["Profane"] for document in data.values()]
-writing_labels = [document["Writing"] for document in data.values()]
-context_labels = [document["Context"] for document in data.values()]
-
-# Again, the same thing just for sclass this time.
-
-secondary_labels = [document["sclass"] for document in data.values()]
-
-# Looks like: ["Research/Informative", "Research/Informative", "Advice/Guidance", ...]
-
-# Also for clarity, either could be re-written as:
-#
-# primary_labels = []
-# for document in data.values():
-#     primary_labels.append(document["pclass"])
-#
-# I used primary_labels as the example but you could also do secondary, here document is an arbitrary iterator variable and "pclass" is the key.
-#
-
-# Yay! More ML stuff, basically this is a split of the data from the data dict into training and testing portions.
-# You can see that it defines and fills the variables, "training_text", "testing_text", "training_pclass", "training_sclass", and "testing_sclass".
-# It fills those variables with a random shuffle (sort of random, the seed is 42, this can be seen in random_state=42) of the data from the data dict's labels as well as the embeddings (line 35)
-# Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
-#  assigning 50% of the data to training and 50% of the data to testing.
-
-# Convert binary labels to 0/1 for LogisticRegression (optional but safer)
-profane_labels_bin = np.array([1 if x=="Yes" else 0 for x in profane_labels])
-writing_labels_bin = np.array([1 if x=="Yes" else 0 for x in writing_labels])
-context_labels_bin = np.array([1 if x=="Yes" else 0 for x in context_labels])
-
-# For stratification, use one of the labels (or combine them if you want)
-training_text, testing_text, training_profanity, testing_profanity, training_writing, testing_writing, training_context, testing_context = train_test_split(
+# ======= Train/test split =======
+# For binary labels, stratify using one of them to ensure class balance
+training_text, testing_text, training_profanity, testing_profanity, \
+training_writing, testing_writing, training_context, testing_context, \
+training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(
     embeddings,
-    profane_labels_bin,
-    writing_labels_bin,
-    context_labels_bin,
+    profane_labels,
+    writing_labels,
+    context_labels,
+    primary_labels,
+    secondary_labels,
     test_size=0.1,
     random_state=42,
-    stratify=profane_labels_bin  # or another label, or combine labels
+    stratify=profane_labels  # ensures at least some '1' and '0' in training set
 )
 
+# ======= Setup label dictionary =======
+label_sets = {
+    "primary": (training_pclass, testing_pclass),
+    "secondary": (training_sclass, testing_sclass),
+    "profanity": (training_profanity, testing_profanity),
+    "writing": (training_writing, testing_writing),
+    "context": (training_context, testing_context)
+}
 
-# I would show what it looks like but it'd be a massive pain..
+classifiers = {}
+accuracies = {}
 
-# Initiating the primary classifier, it uses LogisticRegression (sklearn.linear_mode, line 4) to map the input features to the class probabilities, being a fancy abstract-dimension and all (line 33).
-# The maximum # of optimization steps to take is 500 as per the max_iter=500 parameter, but it will stop short if the weights converge.
-# it's then fit to the training text and training primary classifications to... train off of.
-# Note, .fit loosely translates to "learn from" which I find easier, or more precisely "optimizes the weights of the logistic regression model to minimize classification error", thanks Chatty.
-# So basically its learning where to plot and cluster it's weights/classifications based off of the contents of the training_text and training_pclass (line 68). Simple right?
+# ======= Train classifiers =======
+for name, (y_train, y_test) in label_sets.items():
+    # Use DummyClassifier if only one class exists
+    if len(np.unique(y_train)) > 1:
+        clf = LogisticRegression(max_iter=500)
+    else:
+        clf = DummyClassifier(strategy="constant", constant=y_train[0])
+    
+    clf.fit(training_text, y_train)
+    pred = clf.predict(testing_text)
+    
+    classifiers[name] = clf
+    accuracies[name] = accuracy_score(y_test, pred) * 100
 
-clf_primary = LogisticRegression(max_iter=500)
-clf_primary.fit(training_text, training_pclass) # Hey, Primary Classifier, learn (recognize the patterns) from this training text EMBED I have and each vector's corresponding label from training_pclass.
-
-# Okay, so this really is just the same thing as the primary classifier, but it does it for the secondary classifications and uses sclass rather than pclass, for further detail refer to line 72.
-
-clf_secondary = LogisticRegression(max_iter=500)
-clf_secondary.fit(training_text, training_sclass)
-
-clf_profanity = LogisticRegression(max_iter=500)
-clf_profanity.fit(training_text, training_profanity)
-
-clf_writing = LogisticRegression(max_iter=500)
-clf_writing.fit(training_text, training_writing)
-
-clf_context = LogisticRegression(max_iter=500)
-clf_context.fit(training_text, training_context)
-
-# Initiates the primary predictor, this calls on the primary classifier to predict through .predict using the testing text as a paramenter!
-# So, I dont completeley get it... but I think it calculates the linear scores along the LogReg line from the weights/biases and chooses the highest probability class.
-# Afternote: the input embedding is converted into a linear score for each class
-# (by taking the dot product with each class's learned weight vector and adding the bias). 
-# These scores are then converted into probabilities via softmax, 
-# and the class with the highest probability is chosen as the predicted label.
-# It then chooses the closest, and highest classification to the position found for the input text and chooses that classification.
-# basically, it finds where it WOULD plot the input data in following with its training data, and then chooses the highest classifications that have the closest distance from the weights as the chosen point.
-# This uses fancy math like softmax functions, which I know conceptually but not fundamentally, so I'm not terribly familiar.
-# If you want a better description here's GPT's take:
-
-# Uses the primary classifier to predict classes for the testing embeddings.
-# .predict() takes the testing text embeddings as input and outputs the most likely class labels.
-# Internally, the classifier computes a score for each class (using the learned weights and biases) and applies a softmax to estimate probabilities.
-# The class with the highest probability is chosen as the predicted label.
-# No retraining occurs here; it just applies what the classifier learned during .fit().
-
-
-pred_primary = clf_primary.predict(testing_text) # Another mention real quick, testing_text is an embed, therefore its a dense vector array, NOT raw text, refer to lines 68, and 31.
-
-pred_secondary = clf_secondary.predict(testing_text) # Comment on line 114.
-
-pred_profanity = clf_profanity.predict(testing_text)
-pred_writing = clf_writing.predict(testing_text)
-pred_context = clf_context.predict(testing_text)
-
-# Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
-# Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
-primary_accuracy = accuracy_score(testing_pclass, pred_primary) * 100
-secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
-profanity_accuracy = accuracy_score(testing_profanity, pred_profanity) * 100
-writing_accuracy = accuracy_score(testing_writing, pred_writing) * 100
-context_accuracy = accuracy_score(testing_context, pred_context) * 100
+# ======= Print results =======
+for label, acc in accuracies.items():
+    print(f"{label.capitalize()} Accuracy: {acc:.2f}%")
 
 st.title("AI Project")
 
+# -------------------------
 # Ensure embeddings and labels are aligned
-n = min(len(embeddings), len(training_pclass), len(training_sclass))
-embeddings = embeddings[:n]
+n = min(len(training_text), len(training_pclass), len(training_sclass))
+embeddings_plot = np.array(training_text[:n])
 p_labels = np.array(training_pclass[:n])
 s_labels = np.array(training_sclass[:n])
 
-# Encode labels for plotting
+# -------------------------
+# Encode labels for coloring
 le_p = LabelEncoder()
 p_labels_encoded = le_p.fit_transform(p_labels)
 
 le_s = LabelEncoder()
 s_labels_encoded = le_s.fit_transform(s_labels)
 
-# Reduce embeddings to 2D for plotting
-X_pca = PCA(n_components=2).fit_transform(embeddings)
+# -------------------------
+# Reduce embeddings to 2D
+X_pca = PCA(n_components=2).fit_transform(embeddings_plot)
 
 # -------------------------
-# Create side-by-side figure
+# Create side-by-side scatter plot
 fig, axes = plt.subplots(1, 2, figsize=(14,6))
 
 # Primary classifier scatter
-scatter1 = axes[0].scatter(X_pca[:,0], X_pca[:,1], c=p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
+scatter1 = axes[0].scatter(X_pca[:,0], X_pca[:,1], c=p_labels_encoded, cmap='tab10',
+                           alpha=0.7, edgecolor='k')
 axes[0].set_title("Primary Classifier")
 axes[0].set_xlabel("PC 1")
 axes[0].set_ylabel("PC 2")
@@ -215,7 +168,8 @@ legend_elements = [Line2D([0], [0], marker='o', color='w', label=cls,
 axes[0].legend(handles=legend_elements, title="Classes")
 
 # Secondary classifier scatter
-scatter2 = axes[1].scatter(X_pca[:,0], X_pca[:,1], c=s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k')
+scatter2 = axes[1].scatter(X_pca[:,0], X_pca[:,1], c=s_labels_encoded, cmap='tab20',
+                           alpha=0.7, edgecolor='k')
 axes[1].set_title("Secondary Classifier")
 axes[1].set_xlabel("PC 1")
 axes[1].set_ylabel("PC 2")
@@ -230,21 +184,26 @@ axes[1].legend(handles=legend_elements2, title="Classes")
 plt.tight_layout()
 st.pyplot(fig)
 
-st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
-st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
-st.write(f"The model's profanity accuracy is operating at {profanity_accuracy}%")
-st.write(f"The model's context accuracy is operating at {context_accuracy}%")
-st.write(f"The model's writing accuracy is operating at {writing_accuracy}%")
+# ======= Display accuracies dynamically =======
+for label, acc in accuracies.items():
+    st.write(f"The model's {label} accuracy is operating at {acc:.2f}%")
 
+# ======= TextClassifier =======
 class TextClassifier:
-    def __init__(self, tokenizer, model, clf_primary, clf_secondary):
+    def __init__(self, tokenizer, model, classifiers_dict):
+        """
+        classifiers_dict: dictionary containing trained classifiers for each label
+        e.g., classifiers_dict = {
+            'primary': clf_primary,
+            'secondary': clf_secondary,
+            'profanity': clf_profanity,
+            'writing': clf_writing,
+            'context': clf_context
+        }
+        """
         self.tokenizer = tokenizer
         self.model = model
-        self.clf_primary = clf_primary
-        self.clf_secondary = clf_secondary
-        self.clf_context = clf_context
-        self.clf_writing = clf_writing
-        self.clf_profanity = clf_profanity
+        self.classifiers = classifiers_dict
 
     def embed(self, texts):
         encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt')
@@ -255,25 +214,18 @@ class TextClassifier:
         return embeddings.cpu().numpy()
 
     def predict(self, texts):
-                emb = self.embed(texts)
-                p_pred = self.clf_primary.predict(emb)[0]
-                s_pred = self.clf_secondary.predict(emb)[0]
-                c_pred = self.clf_context.predict(emb)(0)
-                w_pred = self.clf_writing.predict(emb)(0)
-                p_pred = self.clf_profanity.predict(emb)(0)
-                # Get predictions from your pipeline
-                preds = [p_pred, s_pred, c_pred, w_pred, p_pred]  # e.g., ['History', 'Research/Informative']
-            
-                # Ensure it's a list of Python strings
-                preds_clean = [str(p) for p in preds]
-            
-                # Join into a nice string for display
-                return (", ".join(preds_clean))
+        emb = self.embed([texts])  # Wrap text in a list to handle single input
+        preds = {}
+        for name, clf in self.classifiers.items():
+            pred = clf.predict(emb)[0]
+            preds[name] = str(pred)
+        # Return a formatted string
+        return ", ".join([f"{k}: {v}" for k, v in preds.items()])
 
+# ======= Usage in Streamlit =======
+pipeline = TextClassifier(tokenizer, model, classifiers)
 
-# Usage:
-pipeline = TextClassifier(tokenizer, model, clf_primary, clf_secondary)
-statement = st.text_input("Enter a statment to the system for classification")
+statement = st.text_input("Enter a statement to the system for classification")
 if st.button("Classify"):
-            classifications = pipeline.predict(statement)
-            st.markdown(f"The classifications are : {classifications}.")
+    classifications = pipeline.predict(statement)
+    st.markdown(f"The classifications are: {classifications}.")
