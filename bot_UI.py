@@ -4,7 +4,6 @@ import streamlit as st
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-# Initialize session state at the top
 classification_data.init_session_state(training_text, training_pclass, training_sclass)
 
 # Now you can safely use st.session_state.le_p_classes, etc.
