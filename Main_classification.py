@@ -107,62 +107,54 @@ for label, acc in accuracies.items(): # iterates and gathers the accuracies and 
 
 
 
-# =========================
-# Prepare sidebar data once
-# =========================
-if "sidebar_ready" not in st.session_state:
-    n = min(len(training_text), len(training_pclass), len(training_sclass))
-    st.session_state.embeddings_plot = np.array(training_text[:n])
-    st.session_state.p_labels = np.array(training_pclass[:n])
-    st.session_state.s_labels = np.array(training_sclass[:n])
+# ======= Render side bar =======
 
-    # Encode labels
-    le_p = LabelEncoder()
-    st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
-    st.session_state.p_classes = le_p.classes_
+def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
+    if "sidebar_ready" not in st.session_state:
+        n = min(len(training_text), len(training_pclass), len(training_sclass))
+        st.session_state.embeddings_plot = np.array(training_text[:n])
+        st.session_state.p_labels = np.array(training_pclass[:n])
+        st.session_state.s_labels = np.array(training_sclass[:n])
 
-    le_s = LabelEncoder()
-    st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
-    st.session_state.s_classes = le_s.classes_
+        le_p = LabelEncoder()
+        st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
+        st.session_state.p_classes = le_p.classes_
 
-    # PCA
-    st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
+        le_s = LabelEncoder()
+        st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
+        st.session_state.s_classes = le_s.classes_
 
-    # Save ready flag
-    st.session_state.sidebar_ready = True
-    
-with st.sidebar:
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
+        st.session_state.accuracies = accuracies
+        st.session_state.sidebar_ready = True
 
-    # Primary classifier scatter
-    axes[0].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
-                    c=st.session_state.p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
-    axes[0].set_title("Primary Classifier")
-    axes[0].set_xlabel("PC 1")
-    axes[0].set_ylabel("PC 2")
-    colors = plt.cm.tab10(np.linspace(0, 1, len(st.session_state.p_classes)))
-    legend_elements = [Line2D([0], [0], marker='o', color='w', label=cls,
-                              markerfacecolor=colors[i], markersize=10)
-                       for i, cls in enumerate(st.session_state.p_classes)]
-    axes[0].legend(handles=legend_elements, title="Classes")
+    with st.sidebar:
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        axes[0].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
+                        c=st.session_state.p_labels_encoded, cmap='tab10', alpha=0.7, edgecolor='k')
+        axes[0].set_title("Primary Classifier")
+        axes[0].set_xlabel("PC 1")
+        axes[0].set_ylabel("PC 2")
+        colors = plt.cm.tab10(np.linspace(0, 1, len(st.session_state.p_classes)))
+        legend_elements = [Line2D([0], [0], marker='o', color='w', label=cls,
+                                  markerfacecolor=colors[i], markersize=10)
+                           for i, cls in enumerate(st.session_state.p_classes)]
+        axes[0].legend(handles=legend_elements, title="Classes")
 
-    # Secondary classifier scatter
-    axes[1].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
-                    c=st.session_state.s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k')
-    axes[1].set_title("Secondary Classifier")
-    axes[1].set_xlabel("PC 1")
-    axes[1].set_ylabel("PC 2")
-    colors2 = plt.cm.tab20(np.linspace(0, 1, len(st.session_state.s_classes)))
-    legend_elements2 = [Line2D([0], [0], marker='o', color='w', label=cls,
-                               markerfacecolor=colors2[i], markersize=10)
-                        for i, cls in enumerate(st.session_state.s_classes)]
-    axes[1].legend(handles=legend_elements2, title="Classes")
+        axes[1].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
+                        c=st.session_state.s_labels_encoded, cmap='tab20', alpha=0.7, edgecolor='k')
+        axes[1].set_title("Secondary Classifier")
+        axes[1].set_xlabel("PC 1")
+        axes[1].set_ylabel("PC 2")
+        colors2 = plt.cm.tab20(np.linspace(0, 1, len(st.session_state.s_classes)))
+        legend_elements2 = [Line2D([0], [0], marker='o', color='w', label=cls,
+                                   markerfacecolor=colors2[i], markersize=10)
+                            for i, cls in enumerate(st.session_state.s_classes)]
+        axes[1].legend(handles=legend_elements2, title="Classes")
 
-    plt.tight_layout()
-    st.pyplot(fig)
+        plt.tight_layout()
+        st.pyplot(fig)
 
-    # Example for accuracies
-    if "accuracies" in st.session_state:
         for label, acc in st.session_state.accuracies.items():
             st.write(f"{label} Accuracy: {acc:.2f}%")
 
