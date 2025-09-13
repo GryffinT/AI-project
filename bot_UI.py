@@ -4,33 +4,6 @@ import streamlit as st
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-training_text = classification_data.training_text
-training_pclass = classification_data.training_pclass
-training_sclass = classification_data.training_sclass
-
-def init_session_state(training_text, training_pclass, training_sclass):
-    # Embeddings and labels
-    if "embeddings_plot" not in st.session_state:
-        n = min(len(training_text), len(training_pclass), len(training_sclass))
-        st.session_state.embeddings_plot = np.array(training_text[:n])
-        st.session_state.p_labels = np.array(training_pclass[:n])
-        st.session_state.s_labels = np.array(training_sclass[:n])
-
-    # Encode labels
-    if "p_labels_encoded" not in st.session_state:
-        le_p = LabelEncoder()
-        st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
-        st.session_state.le_p_classes = le_p.classes_
-
-    if "s_labels_encoded" not in st.session_state:
-        le_s = LabelEncoder()
-        st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
-        st.session_state.le_s_classes = le_s.classes_
-
-    # PCA
-    if "X_pca" not in st.session_state:
-        st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
-init_session_state(training_text, training_pclass, training_sclass)
 
 # Now you can safely use st.session_state.le_p_classes, etc.
 with st.sidebar:
