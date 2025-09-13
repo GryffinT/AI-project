@@ -1,7 +1,7 @@
-import main_classification
+import Main_classification
 import classification_data
 import streamlit as st
-from main_classification import render_sidebar
+from Main_classification import render_sidebar
 
 # -------------------------
 # Sidebar (persistent)
