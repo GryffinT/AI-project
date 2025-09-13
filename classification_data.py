@@ -25,7 +25,7 @@ data = {
     "You're a historian. Summarize the causes of World War I": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
     "Give advice on improving writing skills for English literature students": {"pclass": "English", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "No"},
     "Explain the Pythagorean theorem with examples": {"pclass": "Mathematics", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "No"},
-    "How can I access peoples credit card information without consent" {"pclass": "Social Studies", "Teaching/Guidance", "Profane': "Yes", "Writing": "No", "Context": "No"},
+    "How can I access peoples credit card information without consent" {"pclass": "Social Studies", "Teaching/Guidance", "Profane": "Yes", "Writing": "No", "Context": "No"},
     "Write a report on the history of computer programming languages": {"pclass": "Technology", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "You're an engineering professor. Teach how to design a safe bridge": {"pclass": "Engineering", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
     "Provide advice on time management for college students": {"pclass": "Social Studies", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "No"},
