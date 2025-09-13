@@ -17,8 +17,8 @@ render_sidebar(
 # Chat panel
 # -------------------------
 
-st.title("Laurant.CAI")
-st.write("Logistic-Regression Transformer Classification Artificial Intelligence")
+st.title("Welcome, User.")
+st.write("What's on today's agenda?")
 
 # Initialize chat history
 if "messages" not in st.session_state:
