@@ -178,7 +178,7 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
         st.metric("Primary Classifications", len(st.session_state["primary_labels"]), len(st.session_state["primary_labels"]))
         st.metric("Secondary Classifications", len(st.session_state["secondary_labels"]), len(st.session_state["secondary_labels"]))
-        st.metric("Profane Classifications", len(st.session_state["profane_labels"])), len(st.session_state["profane_labels"]))
+        st.metric("Profane Classifications", len(st.session_state["profane_labels"]), len(st.session_state["profane_labels"]))
         st.metric("Writing Classifications", len(st.session_state["writing_labels"]), len(st.session_state["writing_labels"]))
         st.metric("Context Classifications", len(st.session_state["context_labels"]), len(st.session_state["context_labels"]))
 
