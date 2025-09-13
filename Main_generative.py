@@ -5,7 +5,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingA
 from transformers import pipeline
 
 
-dataset = load_dataset("text", data_files=("training": "training_text.txt", "validation": "validation_text.txt")) # takes the training text and validation texts and aggregates a dictionary within data. "training"/"validation" = keys
+dataset = load_dataset("text", data_files={"train": "training_text.txt", "validation": "validation_text.txt"}) # takes the training text and validation texts and aggregates a dictionary within data. "training"/"validation" = keys
 
 tokenizer = AutoTokenizer.from_pretrained("gpt2") # sets the tokenizer to the pretrained transformer's tokenizer
 tokenizer.pad_token = tokenizer.eos_token # initializes the padding token to use as the... EOS token cause gpt dosent have one nativley... not reccommended unless you use masking.
@@ -40,7 +40,7 @@ args = TrainingArguments( # Arguments for the training loop, how it should behav
 )
 
 trainer = Trainer(
-  model="gpt2", # gets the transformer model.
+  model=model = AutoModelForCausalLM.from_pretrained("gpt2"), # gets the transformer model.
   args = args, # sets the training loop's arguments to the ones set above.
   train_dataset = tokenized[training], # sets the training dataset to the training examples from the tokenized dataset.
   eval_dataset = tokenized[validation], #  ^ 
@@ -48,10 +48,10 @@ trainer = Trainer(
 )
 
 trainer.train() # runs the training loop
-trainer.save_model("text generator") # saves the model's progress wthin the text generator file.
+trainer.save_model("text_generator") # saves the model's progress wthin the text generator file.
 tokenizer.save_pretrained("text_generator") # saves the model's config and vocab to the text generator file aswell. 
 
-generator = pipeline("text-generation", model="text_generator", tokenizer="text_generator", device=0) # establishes the transformer pipeline in text generation oode using the text_generator model and tokenizer on the GPU.
+generator = pipeline("text-generation", model="text_generator", tokenizer="text_generator", device=1) # establishes the transformer pipeline in text generation oode using the text_generator model and tokenizer on the CPU.
 
 def output(prompt):
   out = generator( # output of the pipeline =.
