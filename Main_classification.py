@@ -103,9 +103,20 @@ secondary_labels = [document["sclass"] for document in data.values()]
 # Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
 #  assigning 50% of the data to training and 50% of the data to testing.
 
-training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass, \
-training_profanity, testing_profanity, training_writing, testing_writing, training_context, testing_context = train_test_split(
-    embeddings, primary_labels, secondary_labels, profane_labels, writing_labels, context_labels, test_size=0.1, random_state=42
+# Convert binary labels to 0/1 for LogisticRegression (optional but safer)
+profane_labels_bin = np.array([1 if x=="Yes" else 0 for x in profane_labels])
+writing_labels_bin = np.array([1 if x=="Yes" else 0 for x in writing_labels])
+context_labels_bin = np.array([1 if x=="Yes" else 0 for x in context_labels])
+
+# For stratification, use one of the labels (or combine them if you want)
+training_text, testing_text, training_profanity, testing_profanity, training_writing, testing_writing, training_context, testing_context = train_test_split(
+    embeddings,
+    profane_labels_bin,
+    writing_labels_bin,
+    context_labels_bin,
+    test_size=0.1,
+    random_state=42,
+    stratify=profane_labels_bin  # or another label, or combine labels
 )
 
 
