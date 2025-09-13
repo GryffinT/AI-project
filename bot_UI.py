@@ -7,10 +7,10 @@ from Main_classification import render_sidebar
 # Sidebar (persistent)
 # -------------------------
 render_sidebar(
-    classification_data.training_text,
-    classification_data.training_pclass,
-    classification_data.training_sclass,
-    classification_data.accuracies
+    Main_classification.training_text,
+    Main_classification.training_pclass,
+    Main_classification.training_sclass,
+    Main_classification.accuracies
 )
 
 # -------------------------
