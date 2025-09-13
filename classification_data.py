@@ -48,5 +48,13 @@ data = {
     "Write a research summary on the effects of climate change on agriculture": {"pclass": "Science", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "You're a history mentor. Summarize the causes and effects of the French Revolution": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
     "Give advice on improving problem-solving skills in physics": {"pclass": "Science", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "No"},
-
+    "You're a career counselor. Advise a recent graduate on landing their first engineering job": {"pclass": "Engineering", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "Yes"},
+    "You're a history teacher. Explain the significance of the Magna Carta to your class": {"pclass": "Social Studies", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
+    "You're my mentor. Help me prepare for my upcoming calculus exam": {"pclass": "Mathematics", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "Yes"},
+    "You're a university professor. Summarize the key challenges in renewable energy adoption for your students": {"pclass": "Engineering", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
+    "You're an English coach. Give personalized feedback on my narrative essay draft": {"pclass": "English", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
+    "You're my study buddy. Teach me the basics of probability for our statistics class": {"pclass": "Mathematics", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "Yes"},
+    "You're my programming partner. Guide me through debugging this Python script": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "Yes"},
+    "You're a science fair judge. Evaluate my project on photosynthesis and offer suggestions": {"pclass": "Science", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "Yes"},
+    "You're a literature professor. Discuss the use of allegory in 'Animal Farm' with your class": {"pclass": "English", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "Yes"}
 }
