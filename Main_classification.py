@@ -78,6 +78,10 @@ primary_labels = [document["pclass"] for document in data.values()]
 
 # looks like: ["Computer Science", "History", "Self Help", ...]
 
+profane_labels = [document["Profane"] for document in data.values()]
+writing_labels = [document["Writing"] for document in data.values()]
+context_labels = [document["Context"] for document in data.values()]
+
 # Again, the same thing just for sclass this time.
 
 secondary_labels = [document["sclass"] for document in data.values()]
@@ -99,7 +103,11 @@ secondary_labels = [document["sclass"] for document in data.values()]
 # Simply put, this takes test_size slices of the data parameters (embeddings, primary_labels, and secondary_labels), so 50/50 and shuffles it,
 #  assigning 50% of the data to training and 50% of the data to testing.
 
-training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(embeddings, primary_labels, secondary_labels, test_size=.1, random_state=42)
+training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass, \
+training_profane, testing_profane, training_writing, testing_writing, training_context, testing_context = train_test_split(
+    embeddings, primary_labels, secondary_labels, profane_labels, writing_labels, context_labels, test_size=0.1, random_state=42
+)
+
 
 # I would show what it looks like but it'd be a massive pain..
 
@@ -115,7 +123,16 @@ clf_primary.fit(training_text, training_pclass) # Hey, Primary Classifier, learn
 # Okay, so this really is just the same thing as the primary classifier, but it does it for the secondary classifications and uses sclass rather than pclass, for further detail refer to line 72.
 
 clf_secondary = LogisticRegression(max_iter=500)
-clf_secondary.fit(training_text, training_sclass) # Comment on line 79
+clf_secondary.fit(training_text, training_sclass)
+
+clf_profanity = LogisticRegression(max_iter=500)
+clf_profanity.fit(training_text, training_profanity)
+
+clf_writing = LogisticRegression(max_iter=500)
+clf_writing.fit(training_text, training_writing)
+
+clf_context = LogisticRegression(max_iter=500)
+clf_context.fit(training_text, training_context)
 
 # Initiates the primary predictor, this calls on the primary classifier to predict through .predict using the testing text as a paramenter!
 # So, I dont completeley get it... but I think it calculates the linear scores along the LogReg line from the weights/biases and chooses the highest probability class.
@@ -137,14 +154,19 @@ clf_secondary.fit(training_text, training_sclass) # Comment on line 79
 
 pred_primary = clf_primary.predict(testing_text) # Another mention real quick, testing_text is an embed, therefore its a dense vector array, NOT raw text, refer to lines 68, and 31.
 
-# Secondary predictor so refer to lines 107-114.
-
 pred_secondary = clf_secondary.predict(testing_text) # Comment on line 114.
+
+pred_profanity = clf_profanity.predict(testing_text)
+pred_writing = clf_writing.predict(testing_text)
+pred_context clf_context.predict(testing_text)
 
 # Standard procedure here, just prints the classification predictions as a percentage using the accuracy_score routine from sklearn.metrics on line 6.
 # Conceptually, it compares the output of the secondary/primary predictors agains the true classifications for the inputs used in the predictors. (var def: line 68)
 primary_accuracy = accuracy_score(testing_pclass, pred_primary) * 100
 secondary_accuracy = accuracy_score(testing_sclass, pred_secondary) * 100
+profanity_accuracy = accuracy_score(testing_profanity, pred_profanity) * 100
+writing_accuracy = accuracy_score(testing_writing, pred_writing) * 100
+context_accuracy = accuracy_score(testing_context, pred_context) * 100
 
 st.title("AI Project")
 
@@ -199,6 +221,9 @@ st.pyplot(fig)
 
 st.write(f"The model's primary accuracy is operating at {primary_accuracy}%")
 st.write(f"The model's secondary accuracy is operating at {secondary_accuracy}%")
+st.write(f"The model's profanity accuracy is operating at {profanity_accuracy}%")
+st.write(f"The model's context accuracy is operating at {context_accuracy}%")
+st.write(f"The model's writing accuracy is operating at {writing_accuracy}%")
 
 class TextClassifier:
     def __init__(self, tokenizer, model, clf_primary, clf_secondary):
@@ -206,6 +231,9 @@ class TextClassifier:
         self.model = model
         self.clf_primary = clf_primary
         self.clf_secondary = clf_secondary
+        self.clf_context = clf_context
+        self.clf_writing = clf_writing
+        self.clf_profanity = clf_profanity
 
     def embed(self, texts):
         encoded_input = self.tokenizer(texts, padding=True, truncation=True, return_tensors='pt')
@@ -219,8 +247,11 @@ class TextClassifier:
                 emb = self.embed(texts)
                 p_pred = self.clf_primary.predict(emb)[0]
                 s_pred = self.clf_secondary.predict(emb)[0]
+                c_pred = self.clf_context.predict(emb)(0)
+                w_pred = self.clf_writing.predict(emb)(0)
+                p_pred = self.clf_profanity.predict(emb)(0)
                 # Get predictions from your pipeline
-                preds = [p_pred, s_pred]  # e.g., ['History', 'Research/Informative']
+                preds = [p_pred, s_pred, c_pred, w_pred, p_pred]  # e.g., ['History', 'Research/Informative']
             
                 # Ensure it's a list of Python strings
                 preds_clean = [str(p) for p in preds]
