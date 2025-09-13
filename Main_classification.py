@@ -110,12 +110,14 @@ for label, acc in accuracies.items(): # iterates and gathers the accuracies and 
 # ======= Render side bar =======
 
 def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
-    if "sidebar_ready" not in st.session_state:
+    # Compute/store data only once
+    if "data_persistent" not in st.session_state:
         n = min(len(training_text), len(training_pclass), len(training_sclass))
         st.session_state.embeddings_plot = np.array(training_text[:n])
         st.session_state.p_labels = np.array(training_pclass[:n])
         st.session_state.s_labels = np.array(training_sclass[:n])
 
+        # Encode labels
         le_p = LabelEncoder()
         st.session_state.p_labels_encoded = le_p.fit_transform(st.session_state.p_labels)
         st.session_state.p_classes = le_p.classes_
@@ -124,10 +126,16 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
         st.session_state.s_labels_encoded = le_s.fit_transform(st.session_state.s_labels)
         st.session_state.s_classes = le_s.classes_
 
+        # PCA
         st.session_state.X_pca = PCA(n_components=2).fit_transform(st.session_state.embeddings_plot)
-        st.session_state.accuracies = accuracies
-        st.session_state.sidebar_ready = True
 
+        # Store accuracies
+        st.session_state.accuracies = accuracies
+
+        # Mark persistent data ready
+        st.session_state.data_persistent = True
+
+    # Render sidebar using persistent data
     with st.sidebar:
         fig, axes = plt.subplots(1, 2, figsize=(14, 6))
         axes[0].scatter(st.session_state.X_pca[:, 0], st.session_state.X_pca[:, 1],
@@ -155,6 +163,7 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
         plt.tight_layout()
         st.pyplot(fig)
 
+        # Display persistent accuracies
         for label, acc in st.session_state.accuracies.items():
             st.write(f"{label} Accuracy: {acc:.2f}%")
 
