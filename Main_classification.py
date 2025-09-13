@@ -104,7 +104,7 @@ secondary_labels = [document["sclass"] for document in data.values()]
 #  assigning 50% of the data to training and 50% of the data to testing.
 
 training_text, testing_text, training_pclass, testing_pclass, training_sclass, testing_sclass, \
-training_profane, testing_profane, training_writing, testing_writing, training_context, testing_context = train_test_split(
+training_profanity, testing_profanity, training_writing, testing_writing, training_context, testing_context = train_test_split(
     embeddings, primary_labels, secondary_labels, profane_labels, writing_labels, context_labels, test_size=0.1, random_state=42
 )
 
