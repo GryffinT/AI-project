@@ -163,9 +163,9 @@ with st.sidebar:
     plt.tight_layout()
     st.pyplot(fig)
 
-# ======= Display accuracies dynamically =======
-for label, acc in accuracies.items(): # gets the accuracy rates per predictor just like before
-    st.write(f"The model's {label} accuracy is operating at {acc:.2f}%") # displays the accuracy of each predictor as a writeup on streamlit's interface.
+    # ======= Display accuracies dynamically =======
+    for label, acc in accuracies.items(): # gets the accuracy rates per predictor just like before
+        st.write(f"The model's {label} accuracy is operating at {acc:.2f}%") # displays the accuracy of each predictor as a writeup on streamlit's interface.
 
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
