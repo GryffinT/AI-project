@@ -105,7 +105,8 @@ for name, (y_train, y_test) in label_sets.items(): #  Iterates over the label_se
 for label, acc in accuracies.items(): # iterates and gathers the accuracies and their respective predictors from before
     print(f"{label.capitalize()} Accuracy: {acc:.2f}%") # prints out the accuracies of each predictor
 
-st.title("AI Project")
+st.title("Laurant.CA")
+st.write ("Logistic-Regression Transformer Classifcation Algorithm)
 
 # -------------------------
 # Ensure embeddings and labels are aligned
