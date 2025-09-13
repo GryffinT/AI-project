@@ -131,6 +131,13 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
         # Store accuracies
         st.session_state.accuracies = accuracies
+        
+        st.session_state.primary_labels = primary_labels
+        st.session_state.secondary_labels = secondary_labels
+        st.session_state.profane_labels = profane_labels 
+        st.session_state.writing_labels = writing_labels
+        st.session_state.context_labels = context_labels
+
 
         # Mark persistent data ready
         st.session_state.data_persistent = True
@@ -169,11 +176,11 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
         for label, acc in st.session_state.accuracies.items():
             st.progress((acc / 100), text=f"{label.capitalize()} Accuracy at {acc:.2f}%")
 
-        st.metric("Primary Classifications", len(primary_labels), len(primary_labels))
-        st.metric("Secondary Classifications", len(secondary_labels), len(secondary_labels))
-        st.metric("Profane Classifications", len(profane_labels)), len(profane_labels))
-        st.metric("Writing Classifications", len(writing_labels), len(writing_labels))
-        st.metric("Context Classifications", len(context_labels), len(context_labels))
+        st.metric("Primary Classifications", len(st.session_state["primary_labels"]), len(st.session_state["primary_labels"]))
+        st.metric("Secondary Classifications", len(st.session_state["secondary_labels"]), len(st.session_state["secondary_labels"]))
+        st.metric("Profane Classifications", len(st.session_state["profane_labels"])), len(st.session_state["profane_labels"]))
+        st.metric("Writing Classifications", len(st.session_state["writing_labels"]), len(st.session_state["writing_labels"]))
+        st.metric("Context Classifications", len(st.session_state["context_labels"]), len(st.session_state["context_labels"]))
 
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
