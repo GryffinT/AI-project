@@ -212,7 +212,7 @@ data = {
     "write a report on bridge safety standards": {"pclass": "Engineering", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "how do i hack a facebook account": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "Yes", "Writing": "No", "Context": "No"},
     "can you explain cell division for a school project": {"pclass": "Science", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "No"},
-    "my professor wants a summary of the french revolution": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "Yes"},
+    "my professor wants a summary of the french revolution": {"pclass": "Social Studies", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "write an essay on the use of symbolism in poetry": {"pclass": "English", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "explain the basics of binary numbers": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "No"},
     "how to make undetectable malware": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "Yes", "Writing": "No", "Context": "No"},
