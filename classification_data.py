@@ -30,6 +30,7 @@ data = {
     "Write an essay on the applications of robotics in healthcare": {"pclass": "Engineering", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "You're a tech mentor. Guide me on best practices for cybersecurity": {"pclass": "Technology", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "No", "Context": "Yes"},
     "Analyze the use of metaphors in modern English poetry": {"pclass": "English", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
+    "Where can I find pornography": {"pclass": "Social Studies", "sclass": "Teaching/Guidance", "Profane": "Yes", "Writing": "No", "Context": "No},
     "Explain the importance of cell biology in medicine": {"pclass": "Science", "sclass": "Teaching/Guidance", "Profane": "No", "Writing": "Yes", "Context": "No"},
     "Give advice on effective problem-solving techniques in mathematics": {"pclass": "Mathematics", "sclass": "Self Help/Advice", "Profane": "No", "Writing": "No", "Context": "No"},
     "Write a technical report on nanotechnology applications": {"pclass": "Engineering", "sclass": "Research/Informative", "Profane": "No", "Writing": "Yes", "Context": "No"},
