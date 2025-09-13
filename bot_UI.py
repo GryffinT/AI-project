@@ -17,10 +17,6 @@ render_sidebar(
 # Chat panel
 # -------------------------
 
-if st.button("Send") and user_input:
-    response = "This is a dummy LLM response"  # Replace with your LLM function
-    st.write(f"LLM: {response}")
-
 st.title("Laurant.CA")
 st.write("Logistic-Regression Transformer Classification Algorithm")
 
