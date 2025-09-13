@@ -169,6 +169,13 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
         for label, acc in st.session_state.accuracies.items():
             st.progress((acc / 100), text=f"{label.capitalize()} Accuracy at {acc:.2f}%")
 
+        st.metric("Examples", len(classification_data.data.keys()), len(classification_data.data.keys()))
+        st.metric("Primary Classifications", len(classification_data.data.values("pclass")), len(classification_data.data.values("pclass")))
+        st.metric("Secondary Classifications", len(classification_data.data.values("sclass")), len(classification_data.data.values("sclass")))
+        st.metric("Profane Classifications", len(classification_data.data.values("Profane")), len(classification_data.data.values("Profane")))
+        st.metric("Writing Classifications", len(classification_data.data.values("Writing")), len(classification_data.data.values("Writing")))
+        st.metric("Context Classifications", len(classification_data.data.values("Context")), len(classification_data.data.values("Context")))
+
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
     def __init__(self, tokenizer, model, classifiers_dict): # Initializes the object
