@@ -62,7 +62,7 @@ context_labels = [1 if doc["Context"]=="Yes" else 0 for doc in data.values()] # 
 # Test/Train/Split, shuffles the data give, so the embedded text stored in "training_text", multi-class labels from above and the dummy labels as well.
 stratify_labels = np.array([f"{p}-{w}-{c}" for p, w, c in zip(profane_labels, writing_labels, context_labels)])
 # For binary labels, stratify using one of them to ensure class balance
-training_text, testing_text, training_profanity, testing_profanity, \ #
+training_text, testing_text, training_profanity, testing_profanity, \
 training_writing, testing_writing, training_context, testing_context, \
 training_pclass, testing_pclass, training_sclass, testing_sclass = train_test_split(
     embeddings, # Embedded text from the embed portion.
