@@ -17,7 +17,7 @@ render_sidebar(
 # Chat panel
 # -------------------------
 
-st.markdown('<h1 style="font-size:200px">Welcome, User.</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="font-size:50px">Welcome, User.</h1>', unsafe_allow_html=True)
 st.write("What's on today's agenda?")
 
 # Initialize chat history
