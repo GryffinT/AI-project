@@ -131,7 +131,12 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
         # Store accuracies
         st.session_state.accuracies = accuracies
-        
+
+        profane_true = [doc for doc in profane_labels if doc == 1]
+        context_true = [doc for doc in context_labels if doc == 1]
+        writing_true = [doc for doc in writing_labels if doc == 1]
+
+
         st.session_state.primary_labels = primary_labels
         st.session_state.secondary_labels = secondary_labels
         st.session_state.profane_labels = profane_labels 
