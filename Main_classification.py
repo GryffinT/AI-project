@@ -171,10 +171,10 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
 
         st.metric("Examples", len(classification_data.data.keys()), len(classification_data.data.keys()))
         st.metric("Primary Classifications", len(classification_data.data.values("pclass")), len(classification_data.data.values("pclass")))
-        st.metric("Secondary Classifications", len(classification_data.data.values("sclass")), len(classification_data.data.values("sclass")))
-        st.metric("Profane Classifications", len(classification_data.data.values("Profane")), len(classification_data.data.values("Profane")))
-        st.metric("Writing Classifications", len(classification_data.data.values("Writing")), len(classification_data.data.values("Writing")))
-        st.metric("Context Classifications", len(classification_data.data.values("Context")), len(classification_data.data.values("Context")))
+        st.metric("Secondary Classifications", len(data.values("sclass")), len(data.values("sclass")))
+        st.metric("Profane Classifications", len(data.values("Profane")), len(data.values("Profane")))
+        st.metric("Writing Classifications", len(data.values("Writing")), len(data.values("Writing")))
+        st.metric("Context Classifications", len(data.values("Context")), len(data.values("Context")))
 
 # ======= TextClassifier =======
 class TextClassifier: # OOP python... scary. This makes the TextClassifier class
