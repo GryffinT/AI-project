@@ -17,5 +17,5 @@ random_message = data.keys()(math.rand(0,5))
 if prompt := st.chat_input(random_message):
   with st.chat_message("user"):
     st.markdown(prompt)
-  st.session_state.messages.append("role": "user", "content": prompt)
+  st.session_state.messages.append({"role": "user", "content": prompt})
 
