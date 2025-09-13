@@ -21,7 +21,7 @@ if prompt := st.chat_input("Ask me anything"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        classifications = Main_classification.pipeline.predict(statement)
+        classifications = Main_classification.pipeline.predict(prompt)
         response = f"The classifications are: {classifications}."
     st.session_state.messages.append({"role": "assistant", "content": response})
       
