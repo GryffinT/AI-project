@@ -169,8 +169,8 @@ def render_sidebar(training_text, training_pclass, training_sclass, accuracies):
         for label, acc in st.session_state.accuracies.items():
             st.progress((acc / 100), text=f"{label.capitalize()} Accuracy at {acc:.2f}%")
 
-        st.metric("Examples", len(classification_data.data.keys()), len(classification_data.data.keys()))
-        st.metric("Primary Classifications", len(classification_data.data.values("pclass")), len(classification_data.data.values("pclass")))
+        st.metric("Examples", len(data.keys()), len(data.keys()))
+        st.metric("Primary Classifications", len(data.values("pclass")), len(data.values("pclass")))
         st.metric("Secondary Classifications", len(data.values("sclass")), len(data.values("sclass")))
         st.metric("Profane Classifications", len(data.values("Profane")), len(data.values("Profane")))
         st.metric("Writing Classifications", len(data.values("Writing")), len(data.values("Writing")))
