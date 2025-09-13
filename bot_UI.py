@@ -4,6 +4,10 @@ import streamlit as st
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+training_text = classification_data.training_text
+training_pclass = classification_data.training_pclass
+training_sclass = classification_data.training_sclass
+
 def init_session_state(training_text, training_pclass, training_sclass):
     # Embeddings and labels
     if "embeddings_plot" not in st.session_state:
