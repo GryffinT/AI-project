@@ -17,7 +17,7 @@ render_sidebar(
 # Chat panel
 # -------------------------
 
-st.title("Welcome, User.")
+st.markdown('<h1 style="font-size:500px">Welcome, User.</h1>', unsafe_allow_html=True)
 st.write("What's on today's agenda?")
 
 # Initialize chat history
