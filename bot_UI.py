@@ -4,8 +4,9 @@ import streamlit as st
 import random
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-
+import time
 # Now you can safely use st.session_state.le_p_classes, etc.
+time.sleep(60)
 with st.sidebar:
 
     fig, axes = plt.subplots(1, 2, figsize=(14,6))
