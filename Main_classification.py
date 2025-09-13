@@ -206,8 +206,3 @@ class TextClassifier: # OOP python... scary. This makes the TextClassifier class
 
 # ======= Usage in Streamlit =======
 pipeline = TextClassifier(tokenizer, model, classifiers) # establishes the pipeline (not really though)
-
-statement = st.text_input("Enter a statement to the system for classification") # user input
-if st.button("Classify"):
-    classifications = pipeline.predict(statement)
-    st.markdown(f"The classifications are: {classifications}.")
