@@ -1,2 +1,2 @@
 # LauRenT.16
-Ai for the stuff
+HugginFace repo: https://huggingface.co/GryffinT/text-generator/tree/main
