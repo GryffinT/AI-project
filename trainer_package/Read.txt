@@ -1,0 +1,7 @@
+Heres the dataset used : https://rajpurkar.github.io/SQuAD-explorer/
+
+How to use:
+1. setup the model_trainer.py file and the dataset file in the same location
+2. ensure dependencies are installed
+2a. Optional use a venv
+3. run it through either cmd prompt or powershell: python model_trainer.py
