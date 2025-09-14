@@ -2,9 +2,8 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # Load tokenizer and final model from the repo
-tokenizer = AutoTokenizer.from_pretrained("text_generator")
-model = AutoModelForCausalLM.from_pretrained("text_generator")
-
+tokenizer = AutoTokenizer.from_pretrained("GryffinT/text-generator", subfolder="text_generator")
+model = AutoModelForCausalLM.from_pretrained("GryffinT/text-generator", subfolder="text_generator")
 # If you have a GPU, use device=0; otherwise omit it for CPU
 generator = pipeline(
     "text-generation",
