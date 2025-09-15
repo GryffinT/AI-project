@@ -27,11 +27,12 @@ def load_squad_qa(squad_path): # Load the dataset and turn it into Q: A format
         for para in article["paragraphs"]: # for each paragraph in the data
             for qa in para["qas"]: # for every Q/A pair per paragraph
                 question = qa["question"].strip() # strip the question (remove spaces)
+                paragraph = article["paragraphs"]
                 if not qa["answers"] or qa.get("is_impossible", False): # If theres no answer or the question is impossible
                     answer = "I'm not sure, based on the data provided I am unable to answer that." # set an arbitrary message to map to each unanswerable question
                 else: # If there is an answer
                     answer = qa["answers"][0]["text"].strip() # set the stripped answer to the answer variable
-                qa_list.append(f"Q: {question} A: {answer}") # Add the Q and A to the qa_list
+                qa_list.append(f"C: {paragraph} Q: {question} A: {answer}") # Add the Q and A to the qa_list
     return qa_list # when its done, return the list of all questions mapped to their respective answers
 
 # ----------------- PREPARE DATASET -----------------
