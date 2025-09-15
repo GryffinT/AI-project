@@ -25,9 +25,9 @@ def load_squad_qa(squad_path): # Load the dataset and turn it into Q: A format
     qa_list = [] # Question Answer list 
     for article in data: # for each entry within the data stored in the SQuAD dict
         for para in article["paragraphs"]: # for each paragraph in the data
+            paragraph = para["context"]
             for qa in para["qas"]: # for every Q/A pair per paragraph
                 question = qa["question"].strip() # strip the question (remove spaces)
-                paragraph = article["paragraphs"]
                 if not qa["answers"] or qa.get("is_impossible", False): # If theres no answer or the question is impossible
                     answer = "I'm not sure, based on the data provided I am unable to answer that." # set an arbitrary message to map to each unanswerable question
                 else: # If there is an answer
