@@ -2,8 +2,8 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # Load tokenizer and final model from the repo
-tokenizer = AutoTokenizer.from_pretrained("GryffinT/text-generator", subfolder="text_generator")
-model = AutoModelForCausalLM.from_pretrained("GryffinT/text-generator", subfolder="text_generator")
+tokenizer = AutoTokenizer.from_pretrained("GryffinT/SQuAD.QA", subfolder="QA_Generator") # Edit the first dir for repo access, then the subfolder if and ONLY if the model is in a folder WITHIN the repo.
+model = AutoModelForCausalLM.from_pretrained("GryffinT/SQuAD.QA", subfolder="QA_Generator")
 # If you have a GPU, use device=0; otherwise omit it for CPU
 generator = pipeline(
     "text-generation",
