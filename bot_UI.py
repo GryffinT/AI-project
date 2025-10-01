@@ -20,6 +20,11 @@ render_sidebar(
 
 st.markdown('<h1 style="font-size:70px">Welcome, User.</h1>', unsafe_allow_html=True)
 st.markdown('<h1 style="font-size:30px">What\'s on today\'s agenda?</h1>', unsafe_allow_html=True)
+
+# Context input box
+st.markdown("### Provide a passage for the model to search in:")
+context = st.text_area("Paste your context here:", height=200)
+
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -37,11 +42,13 @@ if prompt := st.chat_input("Ask Laurent anything."):
 
     with st.chat_message("assistant"):
         classifications = Main_classification.pipeline.predict(prompt)
-        generation = output(prompt)
+
+        if context.strip():
+            generation = output(prompt, context)
+        else:
+            generation = "Please provide a context passage so I can answer."
+
         response = f"The classifications are: {classifications}, and my answer is {generation}"
         st.markdown(response)
+
     st.session_state.messages.append({"role": "assistant", "content": response})
-
-      
-
-
