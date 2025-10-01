@@ -17,7 +17,6 @@ render_sidebar(
 # -------------------------
 # Chat panel
 # -------------------------
-
 st.markdown('<h1 style="font-size:70px">Welcome, User.</h1>', unsafe_allow_html=True)
 st.markdown('<h1 style="font-size:30px">What\'s on today\'s agenda?</h1>', unsafe_allow_html=True)
 
@@ -41,14 +40,15 @@ if prompt := st.chat_input("Ask Laurent anything."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+        # Classification
         classifications = Main_classification.pipeline.predict(prompt)
 
-        if context.strip():
-            generation = output(prompt, context)
-        else:
-            generation = "Please provide a context passage so I can answer."
+        # Extractive answer
+        answer = output(prompt, context)
 
-        response = f"The classifications are: {classifications}, and my answer is {generation}"
+        # Full response
+        response = f"The classifications are: {classifications}, and my answer is {answer}"
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
+
