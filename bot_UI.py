@@ -51,7 +51,7 @@ if prompt := st.chat_input("Ask Laurent anything."):
         classifications = Main_classification.pipeline.predict(prompt)
 
         # 2. Auto-fetch context from Wikipedia if empty
-        fetch_context = context
+        fetch_context = context[:-1]
         if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
