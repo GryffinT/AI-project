@@ -6,14 +6,22 @@ from Main_generative import output
 import wikipedia
 
 # -------------------------
-# Sidebar (persistent)
+# Sidebar (persistent + context input)
 # -------------------------
-render_sidebar(
-    Main_classification.training_text,
-    Main_classification.training_pclass,
-    Main_classification.training_sclass,
-    Main_classification.accuracies
-)
+with st.sidebar:
+    render_sidebar(
+        Main_classification.training_text,
+        Main_classification.training_pclass,
+        Main_classification.training_sclass,
+        Main_classification.accuracies
+    )
+
+    st.markdown("---")
+    st.markdown("### Optional context passage")
+    context_input = st.text_area("Paste your context here:", height=200)
+
+# Strip whitespace
+context = context_input.strip() if context_input else ""
 
 # -------------------------
 # Chat panel
@@ -31,12 +39,6 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # -------------------------
-# Context input (optional)
-# -------------------------
-context_input = st.text_area("Paste your context here (optional):", height=200)
-context = context_input.strip() if context_input else ""
-
-# -------------------------
 # Chat input
 # -------------------------
 if prompt := st.chat_input("Ask Laurent anything."):
@@ -49,15 +51,16 @@ if prompt := st.chat_input("Ask Laurent anything."):
         classifications = Main_classification.pipeline.predict(prompt)
 
         # 2. Auto-fetch context from Wikipedia if empty
-        if not context:
+        fetch_context = context
+        if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
-                context = page.content[:1000]  # first 1000 chars
+                fetch_context = page.content[:1000]  # first 1000 chars
             except Exception:
-                context = "No context found for this question."
+                fetch_context = "No context found for this question."
 
         # 3. Extractive QA
-        answer = output(prompt, context)
+        answer = output(prompt, fetch_context)
 
         # 4. Full response
         response = f"The classifications are: {classifications}, and my answer is {answer}"
