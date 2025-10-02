@@ -40,20 +40,20 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # -------------------------
-# Helper: chunk text for long pages
+# Helper: split text into sentences
 # -------------------------
-def chunk_text(text, chunk_size=300):
-    """Split text into overlapping chunks of ~chunk_size words."""
-    words = text.split()
-    chunks = []
-    for i in range(0, len(words), chunk_size):
-        chunks.append(" ".join(words[i:i + chunk_size]))
-    return chunks
+def split_sentences(text):
+    return re.split(r'(?<=[.!?]) +', text)
 
-# Helper: extract first sentence
-def first_sentence(text):
-    sentences = re.split(r'(?<=[.!?]) +', text)
-    return sentences[0] if sentences else text
+# -------------------------
+# Helper: retrieve most relevant sentences
+# -------------------------
+def retrieve_relevant_sentences(text, question, max_sentences=5):
+    sentences = split_sentences(text)
+    question_words = set(question.lower().split())
+    # Keep sentences containing at least one question word
+    relevant = [s for s in sentences if question_words & set(s.lower().split())]
+    return ' '.join(relevant[:max_sentences]) if relevant else ' '.join(sentences[:3])  # fallback to first 3 sentences
 
 # -------------------------
 # Chat input
@@ -78,23 +78,19 @@ if prompt := st.chat_input("Ask Laurent anything."):
             except Exception:
                 fetch_context = "No context found for this question."
 
-        # 4. Split context into smaller chunks
-        chunks = chunk_text(fetch_context, chunk_size=300)
+        # 4. Retrieve relevant sentences from the context
+        relevant_context = retrieve_relevant_sentences(fetch_context, prompt, max_sentences=5)
 
-        # 5. Get answers from all chunks
-        answers = []
-        for chunk in chunks:
-            ans = output(prompt, chunk)
-            if ans != "No answer found":
-                # Keep only the first sentence of each chunk's answer
-                ans = first_sentence(ans)
-                answers.append(ans)
+        # 5. Get answer from the QA model
+        answer = output(prompt, relevant_context)
 
-        # 6. Pick the longest/best answer
-        final_answer = max(answers, key=len) if answers else "No answer found"
+        # 6. Pick first sentence to keep answer concise
+        answer_sentences = split_sentences(answer)
+        final_answer = answer_sentences[0] if answer_sentences else answer
 
         # 7. Full response
         response = f"The classifications are: {classifications}, and my answer is {final_answer}"
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
+
