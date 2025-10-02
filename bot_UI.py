@@ -21,7 +21,7 @@ with st.sidebar:
     context_input = st.text_area("Paste your context here:", height=200)
 
 # Strip whitespace
-context = context_input.strip() if context_input else ""
+context_input = context_input.strip() if context_input else ""
 
 # -------------------------
 # Chat panel
@@ -39,6 +39,17 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # -------------------------
+# Helper: chunk text for long pages
+# -------------------------
+def chunk_text(text, chunk_size=500):
+    """Split text into overlapping chunks of ~chunk_size words."""
+    words = text.split()
+    chunks = []
+    for i in range(0, len(words), chunk_size):
+        chunks.append(" ".join(words[i:i + chunk_size]))
+    return chunks
+
+# -------------------------
 # Chat input
 # -------------------------
 if prompt := st.chat_input("Ask Laurent anything."):
@@ -50,21 +61,32 @@ if prompt := st.chat_input("Ask Laurent anything."):
         # 1. Classification
         classifications = Main_classification.pipeline.predict(prompt)
 
-        # 2. Auto-fetch context from Wikipedia if empty
-        fetch_context = context[:1000]
+        # 2. Determine context
+        fetch_context = context_input
+
+        # 3. Auto-fetch entire Wikipedia page if context is empty
         if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
-                fetch_context = page.content  # first 1000 chars
+                fetch_context = page.content
             except Exception:
                 fetch_context = "No context found for this question."
 
-        # 3. Extractive QA
-        answer = output(prompt, fetch_context)
+        # 4. Split context into chunks for the model
+        chunks = chunk_text(fetch_context, chunk_size=500)
 
-        # 4. Full response
-        response = f"{answer}"
+        # 5. Get answers from all chunks
+        answers = []
+        for chunk in chunks:
+            ans = output(prompt, chunk)
+            if ans != "No answer found":
+                answers.append(ans)
+
+        # 6. Pick the longest/best answer
+        final_answer = max(answers, key=len) if answers else "No answer found"
+
+        # 7. Full response
+        response = f"The classifications are: {classifications}, and my answer is {final_answer}"
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
-
