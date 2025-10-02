@@ -4,6 +4,7 @@ import streamlit as st
 from Main_classification import render_sidebar
 from Main_generative import output
 import wikipedia
+import re
 
 # -------------------------
 # Sidebar (persistent + context input)
@@ -41,13 +42,18 @@ for message in st.session_state.messages:
 # -------------------------
 # Helper: chunk text for long pages
 # -------------------------
-def chunk_text(text, chunk_size=500):
+def chunk_text(text, chunk_size=300):
     """Split text into overlapping chunks of ~chunk_size words."""
     words = text.split()
     chunks = []
     for i in range(0, len(words), chunk_size):
         chunks.append(" ".join(words[i:i + chunk_size]))
     return chunks
+
+# Helper: extract first sentence
+def first_sentence(text):
+    sentences = re.split(r'(?<=[.!?]) +', text)
+    return sentences[0] if sentences else text
 
 # -------------------------
 # Chat input
@@ -72,14 +78,16 @@ if prompt := st.chat_input("Ask Laurent anything."):
             except Exception:
                 fetch_context = "No context found for this question."
 
-        # 4. Split context into chunks for the model
-        chunks = chunk_text(fetch_context, chunk_size=500)
+        # 4. Split context into smaller chunks
+        chunks = chunk_text(fetch_context, chunk_size=300)
 
         # 5. Get answers from all chunks
         answers = []
         for chunk in chunks:
             ans = output(prompt, chunk)
             if ans != "No answer found":
+                # Keep only the first sentence of each chunk's answer
+                ans = first_sentence(ans)
                 answers.append(ans)
 
         # 6. Pick the longest/best answer
