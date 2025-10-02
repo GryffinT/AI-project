@@ -46,14 +46,14 @@ def split_sentences(text):
     return re.split(r'(?<=[.!?]) +', text)
 
 # -------------------------
-# Helper: retrieve most relevant sentences
+# Helper: retrieve top relevant sentences
 # -------------------------
-def retrieve_relevant_sentences(text, question, max_sentences=5):
-    sentences = split_sentences(text)
+def top_relevant_sentences(paragraph, question, n=3):
+    sentences = split_sentences(paragraph)
     question_words = set(question.lower().split())
-    # Keep sentences containing at least one question word
-    relevant = [s for s in sentences if question_words & set(s.lower().split())]
-    return ' '.join(relevant[:max_sentences]) if relevant else ' '.join(sentences[:3])  # fallback to first 3 sentences
+    scored = [(s, len(question_words & set(s.lower().split()))) for s in sentences]
+    scored.sort(key=lambda x: x[1], reverse=True)  # sort by overlap
+    return ' '.join([s for s, _ in scored[:n]]) if scored else paragraph
 
 # -------------------------
 # Chat input
@@ -74,19 +74,21 @@ if prompt := st.chat_input("Ask Laurent anything."):
         if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
-                fetch_context = page.content
+                # Use the first paragraph as summary
+                first_para = page.content.split('\n')[0]
+                fetch_context = first_para
             except Exception:
                 fetch_context = "No context found for this question."
 
-        # 4. Retrieve relevant sentences from the context
-        relevant_context = retrieve_relevant_sentences(fetch_context, prompt, max_sentences=5)
+        # 4. Retrieve top relevant sentences (multi-sentence)
+        relevant_context = top_relevant_sentences(fetch_context, prompt, n=3)
 
         # 5. Get answer from the QA model
         answer = output(prompt, relevant_context)
 
-        # 6. Pick first sentence to keep answer concise
+        # 6. Keep first 2-3 sentences from the model output for completeness
         answer_sentences = split_sentences(answer)
-        final_answer = answer_sentences[0] if answer_sentences else answer
+        final_answer = ' '.join(answer_sentences[:3]) if answer_sentences else answer
 
         # 7. Full response
         response = f"The classifications are: {classifications}, and my answer is {final_answer}"
