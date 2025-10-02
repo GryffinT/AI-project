@@ -63,7 +63,7 @@ if prompt := st.chat_input("Ask Laurent anything."):
         answer = output(prompt, fetch_context)
 
         # 4. Full response
-        response = f"The classifications are: {classifications}, and my answer is {answer}"
+        response = f"{answer}"
         st.markdown(response)
 
     st.session_state.messages.append({"role": "assistant", "content": response})
