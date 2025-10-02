@@ -44,9 +44,7 @@ def clean_text(text: str) -> str:
     """
     if not text:
         return ""
-    # remove bracketed references and footnotes
     text = re.sub(r'\[([^\]]+)\]', '', text)
-    # collapse whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
@@ -56,18 +54,14 @@ def fetch_wikipedia_content(query: str) -> str:
     Handles disambiguation by picking the first sensible result.
     """
     try:
-        # Search first to get a canonical page title
         search_results = wikipedia.search(query, results=5)
         if not search_results:
             return ""
-        # prefer exact match if present
         title = search_results[0]
-        # try to load the page; handle disambiguation by choosing first option
         try:
             page = wikipedia.page(title, auto_suggest=False)
             return page.content
         except wikipedia.DisambiguationError as e:
-            # pick the first option from the disambiguation list
             choice = e.options[0] if e.options else title
             try:
                 page = wikipedia.page(choice, auto_suggest=False)
@@ -96,16 +90,17 @@ def chunk_text_overlap(text: str, max_words: int = CHUNK_MAX_WORDS, overlap: int
         chunks.append(chunk)
         if end == n:
             break
-        # slide window by max_words - overlap
         start += max_words - overlap
     return chunks
 
-def aggregate_answers(question: str, chunks: list, qa_pipeline, score_threshold: float = SCORE_THRESHOLD, max_answers: int = MAX_AGG_ANSWERS):
+def aggregate_answers_with_subject(question: str, chunks: list, qa_pipeline, 
+                                   score_threshold: float = SCORE_THRESHOLD, max_answers: int = MAX_AGG_ANSWERS):
     """
-    Run QA pipeline over chunks and aggregate distinct answers with score >= threshold.
-    Returns concatenated string of top answers (de-duplicated), ordered by highest score.
+    Run QA pipeline over chunks and aggregate answers, ensuring the question subject appears in the output.
     """
-    candidates = []  # list of (answer, score)
+    candidates = []
+    question_keywords = set(q.lower() for q in re.findall(r'\w+', question))
+    
     for chunk in chunks:
         chunk_clean = clean_text(chunk)
         if not chunk_clean:
@@ -114,16 +109,19 @@ def aggregate_answers(question: str, chunks: list, qa_pipeline, score_threshold:
             res = qa_pipeline(question=question, context=chunk_clean)
         except Exception:
             continue
-        # pipeline returns dict with keys: answer, score, start, end (sometimes)
         ans = res.get("answer", "").strip()
         score = float(res.get("score", 0.0))
         if ans and score >= score_threshold:
-            candidates.append((ans, score))
-
+            ans_lower = ans.lower()
+            if any(kw in ans_lower for kw in question_keywords):
+                candidates.append((ans, score))
+            else:
+                # downweight unrelated answer
+                candidates.append((ans, score * 0.5))
+    
     if not candidates:
         return "No answer found."
-
-    # sort by score desc, keep unique answers preserving first seen highest score
+    
     candidates.sort(key=lambda x: x[1], reverse=True)
     unique = []
     seen = set()
@@ -134,15 +132,14 @@ def aggregate_answers(question: str, chunks: list, qa_pipeline, score_threshold:
         unique.append((ans, score))
         if len(unique) >= max_answers:
             break
-
-    # Join answers into a single readable string; avoid running too long
+    
     aggregated = " ".join([a for a, s in unique])
     if len(aggregated) > MAX_FINAL_CHARS:
         aggregated = aggregated[:MAX_FINAL_CHARS].rsplit(" ", 1)[0] + "..."
     return aggregated
 
 # -------------------------
-# Load model & pipeline (cached via st.cache_resource)
+# Load model & pipeline
 # -------------------------
 @st.cache_resource(show_spinner=False)
 def load_qa_pipeline(repo_id: str):
@@ -179,7 +176,7 @@ if prompt := st.chat_input("Type your question here..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 1) classification (left unchanged)
+        # 1) classification
         try:
             classifications = Main_classification.pipeline.predict(prompt)
         except Exception as e:
@@ -190,38 +187,22 @@ if prompt := st.chat_input("Type your question here..."):
             full_context = context_input
         else:
             raw = fetch_wikipedia_content(prompt)
-            if not raw:
-                full_context = ""
-            else:
-                full_context = raw
+            full_context = raw if raw else ""
 
-        # 3) clean & fallback
         if not full_context:
-            # nothing to search; respond gracefully
             answer = "No context available (no user context and Wikipedia fetch failed)."
         else:
             cleaned = clean_text(full_context)
-
-            # optionally show debug
             if debug_mode:
                 st.write("---- DEBUG: cleaned context preview ----")
-                st.write(cleaned[:2000])  # show first 2k chars
+                st.write(cleaned[:2000])
                 st.write("---- end preview ----")
-
-            # 4) chunk with overlap
             chunks = chunk_text_overlap(cleaned, max_words=CHUNK_MAX_WORDS, overlap=CHUNK_OVERLAP)
-
             if debug_mode:
                 st.write(f"Chunks created: {len(chunks)}")
-                for i, c in enumerate(chunks[:5]):
-                    st.write(f"--- chunk {i} preview ---")
-                    st.write(c[:800])
+            answer = aggregate_answers_with_subject(prompt, chunks, qa_pipeline)
 
-            # 5) aggregate answers across chunks
-            answer = aggregate_answers(prompt, chunks, qa_pipeline, score_threshold=SCORE_THRESHOLD, max_answers=MAX_AGG_ANSWERS)
-
-        # 6) final response assembly
+        # 3) final response assembly
         response = f"The classifications are: {classifications}, and my answer is {answer}"
         st.markdown(response)
-
     st.session_state.messages.append({"role": "assistant", "content": response})
