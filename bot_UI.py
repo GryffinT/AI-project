@@ -12,8 +12,8 @@ render_sidebar(
     Main_classification.training_text,
     Main_classification.training_pclass,
     Main_classification.training_sclass,
-    Main_classification.accuracies
-    context_input = st.text_area("Paste your context here (optional):", height=200)
+    Main_classification.accuracies,
+    context_input = st.text_area("Paste your context here (optional):", height=200),
     context = context_input.strip()
 )
 
