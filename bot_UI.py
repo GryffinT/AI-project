@@ -54,11 +54,13 @@ def clean_text(text):
     return re.sub(r'\[\w+\]', '', text)
 
 # -------------------------
-# Load extractive QA model
+# Load extractive QA model from Hugging Face repo
 # -------------------------
-MODEL_NAME = "./my_squad_trained_model"  # your trained model or HF repo
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForQuestionAnswering.from_pretrained(MODEL_NAME)
+# Replace with your actual HF repo ID
+HF_REPO = "GryffinT/SQuAD.QA"
+
+tokenizer = AutoTokenizer.from_pretrained(HF_REPO)
+model = AutoModelForQuestionAnswering.from_pretrained(HF_REPO)
 qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
 
 def answer_question(question, context):
@@ -83,22 +85,23 @@ if prompt := st.chat_input("Ask Laurent anything."):
         # 2. Determine context
         fetch_context = context_input
 
+        # 3. Auto-fetch Wikipedia page if context is empty
         if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
-                # Use first paragraph by default
+                # Use the first paragraph as default context
                 first_para = page.content.split('\n')[0]
                 fetch_context = first_para
             except Exception:
                 fetch_context = "No context found for this question."
 
-        # 3. Multi-sentence retrieval for completeness
+        # 4. Multi-sentence retrieval for completeness
         relevant_context = top_relevant_sentences(fetch_context, prompt, n=3)
 
-        # 4. Get extractive answer
+        # 5. Get extractive answer
         answer = answer_question(prompt, relevant_context)
 
-        # 5. Display classifications + answer
+        # 6. Display classifications + answer
         response = f"The classifications are: {classifications}, and my answer is {answer}"
         st.markdown(response)
 
