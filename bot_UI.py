@@ -55,7 +55,7 @@ if prompt := st.chat_input("Ask Laurent anything."):
         if not fetch_context:
             try:
                 page = wikipedia.page(prompt)
-                fetch_context = page.content[:1000]  # first 1000 chars
+                fetch_context = page.content[:3000]  # first 1000 chars
             except Exception:
                 fetch_context = "No context found for this question."
 
