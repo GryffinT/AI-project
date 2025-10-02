@@ -70,19 +70,23 @@ def fetch_wikipedia_context(query):
     except Exception:
         return ""
 
-def answer_from_chunks(question, chunks, qa_pipeline):
-    """Run QA on all chunks and pick the longest non-empty answer."""
-    best_answer = ""
+def aggregate_answers(question, chunks, qa_pipeline, score_threshold=0.1):
+    """Run QA on multiple chunks and aggregate all answers above threshold."""
+    answers = []
     for chunk in chunks:
         chunk_clean = clean_text(chunk)
         try:
             result = qa_pipeline(question=question, context=chunk_clean)
-            answer = result.get("answer", "")
-            if len(answer) > len(best_answer):
-                best_answer = answer
+            if result.get("score", 0) >= score_threshold:
+                answers.append(result.get("answer", ""))
         except Exception:
             continue
-    return best_answer if best_answer else "No answer found."
+    # Remove duplicates and join
+    unique_answers = []
+    for a in answers:
+        if a not in unique_answers:
+            unique_answers.append(a)
+    return " ".join(unique_answers) if unique_answers else "No answer found."
 
 # -------------------------
 # Load extractive QA model from Hugging Face repo
@@ -115,8 +119,8 @@ if prompt := st.chat_input("Ask Laurent anything."):
         # 3. Split into chunks
         chunks = chunk_text(full_context, max_tokens=500)
 
-        # 4. Run QA on all chunks
-        answer = answer_from_chunks(prompt, chunks, qa_pipeline)
+        # 4. Aggregate QA across all chunks
+        answer = aggregate_answers(prompt, chunks, qa_pipeline)
 
         # 5. Display classifications + answer
         response = f"The classifications are: {classifications}, and my answer is {answer}"
