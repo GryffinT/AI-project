@@ -12,9 +12,7 @@ render_sidebar(
     Main_classification.training_text,
     Main_classification.training_pclass,
     Main_classification.training_sclass,
-    Main_classification.accuracies,
-    context_input = st.text_area("Paste your context here (optional):", height=200),
-    context = context_input.strip()
+    Main_classification.accuracies
 )
 
 # -------------------------
@@ -32,28 +30,36 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+# -------------------------
+# Context input (optional)
+# -------------------------
+context_input = st.text_area("Paste your context here (optional):", height=200)
+context = context_input.strip() if context_input else ""
+
+# -------------------------
 # Chat input
+# -------------------------
 if prompt := st.chat_input("Ask Laurent anything."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # Classification
+        # 1. Classification
         classifications = Main_classification.pipeline.predict(prompt)
 
-        # Auto-fetch from Wikipedia if empty
+        # 2. Auto-fetch context from Wikipedia if empty
         if not context:
             try:
                 page = wikipedia.page(prompt)
-                context = page.content[:1000]  # first 1000 chars as context
+                context = page.content[:1000]  # first 1000 chars
             except Exception:
                 context = "No context found for this question."
 
-        # Extractive answer
+        # 3. Extractive QA
         answer = output(prompt, context)
 
-        # Full response
+        # 4. Full response
         response = f"The classifications are: {classifications}, and my answer is {answer}"
         st.markdown(response)
 
