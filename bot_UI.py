@@ -13,6 +13,8 @@ render_sidebar(
     Main_classification.training_pclass,
     Main_classification.training_sclass,
     Main_classification.accuracies
+    context_input = st.text_area("Paste your context here (optional):", height=200)
+    context = context_input.strip()
 )
 
 # -------------------------
@@ -39,10 +41,6 @@ if prompt := st.chat_input("Ask Laurent anything."):
     with st.chat_message("assistant"):
         # Classification
         classifications = Main_classification.pipeline.predict(prompt)
-
-        # Get context
-        context_input = st.text_area("Paste your context here (optional):", height=200)
-        context = context_input.strip()
 
         # Auto-fetch from Wikipedia if empty
         if not context:
