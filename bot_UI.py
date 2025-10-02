@@ -1,13 +1,24 @@
+# app.py
+import re
+import streamlit as st
+import wikipedia
+from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
 import Main_classification
 import classification_data
-import streamlit as st
 from Main_classification import render_sidebar
-from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
-import wikipedia
-import re
 
 # -------------------------
-# Sidebar (persistent + context input)
+# Config
+# -------------------------
+HF_REPO = "GryffinT/SQuAD.QA"  # <-- your Hugging Face repo id
+CHUNK_MAX_WORDS = 700         # size of each chunk in words
+CHUNK_OVERLAP = 120           # overlap between chunks in words
+SCORE_THRESHOLD = 0.0         # include answers with score >= this
+MAX_AGG_ANSWERS = 5          # max number of distinct answers to include
+MAX_FINAL_CHARS = 1000       # truncate final aggregated answer to this many chars
+
+# -------------------------
+# Sidebar: render sidebar + context input
 # -------------------------
 with st.sidebar:
     render_sidebar(
@@ -16,18 +27,141 @@ with st.sidebar:
         Main_classification.training_sclass,
         Main_classification.accuracies
     )
-
     st.markdown("---")
-    st.markdown("### Optional context passage")
-    context_input = st.text_area("Paste your context here:", height=200)
+    st.markdown("### Optional context passage (sidebar)")
+    context_input = st.text_area("Paste your context here (optional):", height=220)
+    st.markdown("---")
+    debug_mode = st.checkbox("Show debug info (context, chunks)", value=False)
 
 context_input = context_input.strip() if context_input else ""
 
 # -------------------------
-# Chat panel
+# Utilities
+# -------------------------
+def clean_text(text: str) -> str:
+    """
+    Clean wikipedia text: remove bracketed notes like [1], [a], etc., and normalize whitespace.
+    """
+    if not text:
+        return ""
+    # remove bracketed references and footnotes
+    text = re.sub(r'\[([^\]]+)\]', '', text)
+    # collapse whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def fetch_wikipedia_content(query: str) -> str:
+    """
+    Fetch the full wikipedia page content for the query.
+    Handles disambiguation by picking the first sensible result.
+    """
+    try:
+        # Search first to get a canonical page title
+        search_results = wikipedia.search(query, results=5)
+        if not search_results:
+            return ""
+        # prefer exact match if present
+        title = search_results[0]
+        # try to load the page; handle disambiguation by choosing first option
+        try:
+            page = wikipedia.page(title, auto_suggest=False)
+            return page.content
+        except wikipedia.DisambiguationError as e:
+            # pick the first option from the disambiguation list
+            choice = e.options[0] if e.options else title
+            try:
+                page = wikipedia.page(choice, auto_suggest=False)
+                return page.content
+            except Exception:
+                return ""
+        except wikipedia.PageError:
+            return ""
+    except Exception:
+        return ""
+
+def chunk_text_overlap(text: str, max_words: int = CHUNK_MAX_WORDS, overlap: int = CHUNK_OVERLAP):
+    """
+    Split text into chunks of roughly `max_words` words with `overlap` words between chunks.
+    Returns list of chunk strings.
+    """
+    if not text:
+        return []
+    words = text.split()
+    chunks = []
+    start = 0
+    n = len(words)
+    while start < n:
+        end = min(start + max_words, n)
+        chunk = " ".join(words[start:end])
+        chunks.append(chunk)
+        if end == n:
+            break
+        # slide window by max_words - overlap
+        start += max_words - overlap
+    return chunks
+
+def aggregate_answers(question: str, chunks: list, qa_pipeline, score_threshold: float = SCORE_THRESHOLD, max_answers: int = MAX_AGG_ANSWERS):
+    """
+    Run QA pipeline over chunks and aggregate distinct answers with score >= threshold.
+    Returns concatenated string of top answers (de-duplicated), ordered by highest score.
+    """
+    candidates = []  # list of (answer, score)
+    for chunk in chunks:
+        chunk_clean = clean_text(chunk)
+        if not chunk_clean:
+            continue
+        try:
+            res = qa_pipeline(question=question, context=chunk_clean)
+        except Exception:
+            continue
+        # pipeline returns dict with keys: answer, score, start, end (sometimes)
+        ans = res.get("answer", "").strip()
+        score = float(res.get("score", 0.0))
+        if ans and score >= score_threshold:
+            candidates.append((ans, score))
+
+    if not candidates:
+        return "No answer found."
+
+    # sort by score desc, keep unique answers preserving first seen highest score
+    candidates.sort(key=lambda x: x[1], reverse=True)
+    unique = []
+    seen = set()
+    for ans, score in candidates:
+        if ans in seen:
+            continue
+        seen.add(ans)
+        unique.append((ans, score))
+        if len(unique) >= max_answers:
+            break
+
+    # Join answers into a single readable string; avoid running too long
+    aggregated = " ".join([a for a, s in unique])
+    if len(aggregated) > MAX_FINAL_CHARS:
+        aggregated = aggregated[:MAX_FINAL_CHARS].rsplit(" ", 1)[0] + "..."
+    return aggregated
+
+# -------------------------
+# Load model & pipeline (cached via st.cache_resource)
+# -------------------------
+@st.cache_resource(show_spinner=False)
+def load_qa_pipeline(repo_id: str):
+    tokenizer = AutoTokenizer.from_pretrained(repo_id)
+    model = AutoModelForQuestionAnswering.from_pretrained(repo_id)
+    qa = pipeline("question-answering", model=model, tokenizer=tokenizer)
+    return qa
+
+try:
+    qa_pipeline = load_qa_pipeline(HF_REPO)
+except Exception as e:
+    st.error(f"Failed to load model from Hugging Face repo '{HF_REPO}': {e}")
+    st.stop()
+
+# -------------------------
+# UI header & chat state
 # -------------------------
 st.markdown('<h1 style="font-size:70px">Welcome, User.</h1>', unsafe_allow_html=True)
-st.markdown('<h1 style="font-size:30px">What\'s on today\'s agenda?</h1>', unsafe_allow_html=True)
+st.markdown('<h2 style="font-size:30px">Ask Laurent anything.</h2>', unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -37,92 +171,56 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # -------------------------
-# Helper functions
+# Chat input handling
 # -------------------------
-def clean_text(text):
-    """Remove footnote markers like [a], [1], etc."""
-    return re.sub(r'\[\w+\]', '', text)
-
-def chunk_text(text, max_tokens=500):
-    """Split text into chunks for the QA model (rough token count)."""
-    sentences = re.split(r'(?<=[.!?]) +', text)
-    chunks = []
-    current_chunk = ""
-    current_len = 0
-    for s in sentences:
-        s_len = len(s.split())
-        if current_len + s_len > max_tokens:
-            chunks.append(current_chunk.strip())
-            current_chunk = s + " "
-            current_len = s_len
-        else:
-            current_chunk += s + " "
-            current_len += s_len
-    if current_chunk:
-        chunks.append(current_chunk.strip())
-    return chunks
-
-def fetch_wikipedia_context(query):
-    """Fetch full Wikipedia page content."""
-    try:
-        page = wikipedia.page(query)
-        return page.content.replace("\n", " ")
-    except Exception:
-        return ""
-
-def aggregate_answers(question, chunks, qa_pipeline, score_threshold=0.1):
-    """Run QA on multiple chunks and aggregate all answers above threshold."""
-    answers = []
-    for chunk in chunks:
-        chunk_clean = clean_text(chunk)
-        try:
-            result = qa_pipeline(question=question, context=chunk_clean)
-            if result.get("score", 0) >= score_threshold:
-                answers.append(result.get("answer", ""))
-        except Exception:
-            continue
-    # Remove duplicates and join
-    unique_answers = []
-    for a in answers:
-        if a not in unique_answers:
-            unique_answers.append(a)
-    return " ".join(unique_answers) if unique_answers else "No answer found."
-
-# -------------------------
-# Load extractive QA model from Hugging Face repo
-# -------------------------
-HF_REPO = "GryffinT/SQuAD.QA"  # your Hugging Face repo ID
-tokenizer = AutoTokenizer.from_pretrained(HF_REPO)
-model = AutoModelForQuestionAnswering.from_pretrained(HF_REPO)
-qa_pipeline = pipeline("question-answering", model=model, tokenizer=tokenizer)
-
-# -------------------------
-# Chat input
-# -------------------------
-if prompt := st.chat_input("Ask Laurent anything."):
+if prompt := st.chat_input("Type your question here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 1. Classification
-        classifications = Main_classification.pipeline.predict(prompt)
+        # 1) classification (left unchanged)
+        try:
+            classifications = Main_classification.pipeline.predict(prompt)
+        except Exception as e:
+            classifications = f"Classification failed: {e}"
 
-        # 2. Determine context
+        # 2) determine context: user-provided or wikipedia full page
         if context_input:
             full_context = context_input
         else:
-            full_context = fetch_wikipedia_context(prompt)
-            if not full_context:
-                full_context = "No context found for this question."
+            raw = fetch_wikipedia_content(prompt)
+            if not raw:
+                full_context = ""
+            else:
+                full_context = raw
 
-        # 3. Split into chunks
-        chunks = chunk_text(full_context, max_tokens=500)
+        # 3) clean & fallback
+        if not full_context:
+            # nothing to search; respond gracefully
+            answer = "No context available (no user context and Wikipedia fetch failed)."
+        else:
+            cleaned = clean_text(full_context)
 
-        # 4. Aggregate QA across all chunks
-        answer = aggregate_answers(prompt, chunks, qa_pipeline)
+            # optionally show debug
+            if debug_mode:
+                st.write("---- DEBUG: cleaned context preview ----")
+                st.write(cleaned[:2000])  # show first 2k chars
+                st.write("---- end preview ----")
 
-        # 5. Display classifications + answer
+            # 4) chunk with overlap
+            chunks = chunk_text_overlap(cleaned, max_words=CHUNK_MAX_WORDS, overlap=CHUNK_OVERLAP)
+
+            if debug_mode:
+                st.write(f"Chunks created: {len(chunks)}")
+                for i, c in enumerate(chunks[:5]):
+                    st.write(f"--- chunk {i} preview ---")
+                    st.write(c[:800])
+
+            # 5) aggregate answers across chunks
+            answer = aggregate_answers(prompt, chunks, qa_pipeline, score_threshold=SCORE_THRESHOLD, max_answers=MAX_AGG_ANSWERS)
+
+        # 6) final response assembly
         response = f"The classifications are: {classifications}, and my answer is {answer}"
         st.markdown(response)
 
