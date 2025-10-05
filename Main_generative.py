@@ -14,8 +14,11 @@ import torch
 # -------------------------------
 @st.cache_resource
 def load_models():
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
-    model = AutoModelForQuestionAnswering.from_pretrained("distilbert-base-uncased-distilled-squad")
+    CUSTOM_MODEL = "GryffinT/SQuAD.QA"
+    
+    tokenizer = AutoTokenizer.from_pretrained(CUSTOM_MODEL)
+    model = AutoModelForQuestionAnswering.from_pretrained(CUSTOM_MODEL)
+
     encoder = SentenceTransformer('all-MiniLM-L6-v2')
     nlp_model = spacy.load("en_core_web_sm")
     return tokenizer, model, encoder, nlp_model
@@ -154,6 +157,16 @@ def output(question: str, context: str) -> str:
 
         # Return best chunk
         best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-        return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
+        # After calculating best_chunk:
+        best_chunk_text = best_chunk['chunk_text']
+        
+        # Pass it through your custom QA model
+        inputs = tokenizer(question, best_chunk_text, return_tensors="pt", truncation=True)
+        outputs = model(**inputs)
+        start_idx = torch.argmax(outputs.start_logits)
+        end_idx = torch.argmax(outputs.end_logits)
+        answer = tokenizer.decode(inputs["input_ids"][0][start_idx:end_idx + 1], skip_special_tokens=True)
+        
+        return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\nAnswer: {answer}\n\nContext snippet: {best_chunk_text[:600]}"
 
     
