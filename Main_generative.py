@@ -84,7 +84,7 @@ def output(question: str, context: str) -> str:
                     continue
 
                 # Split into chunks
-                num_chunks = 5
+                num_chunks = 3
                 chunk_size = max(len(page_content) // num_chunks, 1)
                 for i in range(num_chunks):
                     start = i * chunk_size
@@ -119,6 +119,7 @@ def output(question: str, context: str) -> str:
                         "position_score": position_score,
                         "ent_score": ent_score
                     })
+                    
 
             if not pages_data:
                 return "Apologies, it would seem there are no relevant sources for your inquiry."
@@ -159,6 +160,7 @@ def output(question: str, context: str) -> str:
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
 
             # Stop looping if softmax confidence ≥ 0.5
+            print("This chunk's confidence score is" + best_chunk["final_confidence"])
             if best_chunk["final_confidence"] >= 0.5:
                 break
 
