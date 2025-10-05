@@ -2,8 +2,8 @@ import re
 import streamlit as st
 import wikipedia
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
-import Main_classification
 import classification_data
+from Main_generative import output
 from Main_classification import render_sidebar
 
 # -------------------------
