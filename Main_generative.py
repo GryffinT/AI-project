@@ -84,7 +84,7 @@ def output(question: str, context: str) -> str:
                     continue
 
                 # Split into chunks
-                num_chunks = 3
+                num_chunks = 5
                 chunk_size = max(len(page_content) // num_chunks, 1)
                 for i in range(num_chunks):
                     start = i * chunk_size
