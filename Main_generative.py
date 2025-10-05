@@ -13,8 +13,8 @@ import torch
 # -------------------------------
 @st.cache_resource
 def load_models():
-    tokenizer = AutoTokenizer.from_pretrained("GryffinT/SQuAD.QA")
-    model = AutoModelForQuestionAnswering.from_pretrained("GryffinT/SQuAD.QA")
+    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
+    model = AutoModelForQuestionAnswering.from_pretrained("distilbert-base-uncased-distilled-squad")
     encoder = SentenceTransformer('all-MiniLM-L6-v2')
     nlp_model = spacy.load("en_core_web_sm")
     return tokenizer, model, encoder, nlp_model
