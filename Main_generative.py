@@ -71,7 +71,7 @@ def output(question: str, context: str) -> str:
         q_doc = nlp(question)
         
         # Limit pages to top 1–2 to reduce loading
-        for page_title in search_results[:3]:
+        for page_title in search_results[:5]:
             page_content = get_wiki_page(page_title)
             if not page_content:
                 continue
