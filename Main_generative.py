@@ -110,6 +110,7 @@ def output(question: str, context: str) -> str:
                     question_entities = {ent.text for ent in q_doc.ents}
                     chunk_entities = {ent.text for ent in chunk_doc.ents}
                     ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
+                    print(f" Chunk {attempt} processing")
 
                     pages_data.append({
                         "page_title": page_title,
