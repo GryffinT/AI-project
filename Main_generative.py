@@ -51,7 +51,9 @@ def embed_text(text):
 # -------------------------------
 def output(question: str, context: str) -> str:
     if context.strip():
+        # -------------------------------
         # Use QA model directly
+        # -------------------------------
         inputs = tokenizer(question, context, return_tensors="pt", truncation=True)
         outputs = model(**inputs)
         start_idx = torch.argmax(outputs.start_logits)
@@ -59,7 +61,9 @@ def output(question: str, context: str) -> str:
         answer = tokenizer.decode(inputs["input_ids"][0][start_idx:end_idx + 1], skip_special_tokens=True)
         return answer
     else:
+        # -------------------------------
         # Wikipedia-based search
+        # -------------------------------
         search_results = wiki.search(question)
         if not search_results:
             return "Apologies, it would seem there are no relevant sources for your inquiry."
@@ -69,7 +73,7 @@ def output(question: str, context: str) -> str:
         q_doc = nlp(question)
 
         best_chunk = None
-        max_attempts = 3  # Limit to prevent infinite loop
+        max_attempts = 10  # safety limit to prevent infinite loops
         attempt = 0
 
         while attempt < max_attempts:
@@ -153,8 +157,11 @@ def output(question: str, context: str) -> str:
 
             # Select best chunk
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-            if best_chunk["final_confidence"] >= 0.8:
-                break  # Stop looping if high confidence
 
+            # Stop looping if softmax confidence ≥ 0.5
+            if best_chunk["final_confidence"] >= 0.5:
+                break
+
+        # Return the best chunk
         return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
 
