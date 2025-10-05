@@ -5,6 +5,7 @@ from transformers import AutoTokenizer, AutoModelForQuestionAnswering, pipeline
 import classification_data
 from Main_generative import output
 from Main_classification import render_sidebar
+import Main_classification
 
 # -------------------------
 # Config
