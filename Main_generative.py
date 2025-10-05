@@ -16,12 +16,7 @@ def load_models():
     tokenizer = AutoTokenizer.from_pretrained("GryffinT/SQuAD.QA")
     model = AutoModelForQuestionAnswering.from_pretrained("GryffinT/SQuAD.QA")
     encoder = SentenceTransformer('all-MiniLM-L6-v2')
-    try:
-        nlp_model = spacy.load("en_core_web_sm")
-    except OSError:
-        from spacy.cli import download
-        download("en_core_web_sm")
-        nlp_model = spacy.load("en_core_web_sm")
+    nlp_model = spacy.load("en_core_web_sm")
     return tokenizer, model, encoder, nlp_model
 
 tokenizer, model, encoder, nlp = load_models()
