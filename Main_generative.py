@@ -110,7 +110,7 @@ def output(question: str, context: str) -> str:
                     question_entities = {ent.text for ent in q_doc.ents}
                     chunk_entities = {ent.text for ent in chunk_doc.ents}
                     ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
-                    print(f" Chunk {attempt} processing")
+                    print(f" Processing attempt {attempt} Chunk {i}")
 
                     pages_data.append({
                         "page_title": page_title,
@@ -149,14 +149,12 @@ def output(question: str, context: str) -> str:
                     0.1 * p["position_score_norm"]
                 )
                 p["combined_score"] = combined_score
-                print("This chunk's combined confidence score is" + str(p["combined_score"]))
-
 
             # Softmax for probabilistic confidence
             combined_scores = np.array([p["combined_score"] for p in pages_data])
             e_x = np.exp(combined_scores - np.max(combined_scores))
             softmax_scores = e_x / e_x.sum()
-            print(f"This Chunk's confidence rating is {softmax_scores}")
+            print(f"The Softmax scores are: {softmax_scores}")
             for idx, s in enumerate(softmax_scores):
                 pages_data[idx]["final_confidence"] = s
 
