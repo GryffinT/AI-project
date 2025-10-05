@@ -8,4 +8,4 @@ matplotlib==3.8.4
 pandas==2.2.2
 wikipedia==1.4.0
 spacy==3.7.5
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
