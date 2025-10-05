@@ -34,7 +34,7 @@ def output(question: str, context: str) -> str:
             question_embed = encoder.encode(question, convert_to_tensor=True)
             q_doc = nlp(question)
 
-            for x in range(min(5, len(search_results))):
+            for x in range(min(1, len(search_results))):
                 page_title = search_results[x]
                 wikiPage = wiki.page(page_title)
                 page_content = wikiPage.content
