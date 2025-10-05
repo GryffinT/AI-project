@@ -75,10 +75,14 @@ def output(question: str, context: str) -> str:
         best_chunk = None
         max_attempts = 10  # safety limit to prevent infinite loops
         attempt = 0
-
+        vectorizer = TfidfVectorizer(stop_words="english")
+        
         while attempt < max_attempts:
             attempt += 1
             for page_title in search_results[:5]:
+                title_embed = embed_text(page_title)
+                title_semantic_score = util.cos_sim(question_embed, title_embed).item()
+                print(f"The article {page_title} has a semantic score of: {title_semantic_score}")
                 page_content = get_wiki_page(page_title)
                 if not page_content.strip():
                     continue
@@ -94,7 +98,6 @@ def output(question: str, context: str) -> str:
                         continue
 
                     # TF-IDF similarity
-                    vectorizer = TfidfVectorizer(stop_words="english")
                     tfidf_matrix = vectorizer.fit_transform([question, chunk])
                     tfidf_score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
 
@@ -110,7 +113,7 @@ def output(question: str, context: str) -> str:
                     question_entities = {ent.text for ent in q_doc.ents}
                     chunk_entities = {ent.text for ent in chunk_doc.ents}
                     ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
-                    print(f" Processing attempt {attempt} Chunk {i}")
+                    print(f" Processing attempt {attempt + 1} Chunk {i + 1}")
 
                     pages_data.append({
                         "page_title": page_title,
