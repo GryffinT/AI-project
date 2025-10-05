@@ -17,11 +17,20 @@ def load_models():
     CUSTOM_MODEL = "GryffinT/SQuAD.QA"
     
     tokenizer = AutoTokenizer.from_pretrained(CUSTOM_MODEL)
-    model = AutoModelForQuestionAnswering.from_pretrained(CUSTOM_MODEL)
+
+    # Try to load as QA model, else fallback to generic AutoModel
+    try:
+        model = AutoModelForQuestionAnswering.from_pretrained(CUSTOM_MODEL)
+    except Exception as e:
+        print("Warning: Could not load as QA model, loading as generic AutoModel. You may need a custom head.")
+        print("Original error:", e)
+        from transformers import AutoModel
+        model = AutoModel.from_pretrained(CUSTOM_MODEL)
 
     encoder = SentenceTransformer('all-MiniLM-L6-v2')
     nlp_model = spacy.load("en_core_web_sm")
     return tokenizer, model, encoder, nlp_model
+
 
 tokenizer, model, encoder, nlp = load_models()
 
