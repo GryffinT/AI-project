@@ -160,7 +160,7 @@ def output(question: str, context: str) -> str:
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
 
             # Stop looping if softmax confidence ≥ 0.5
-            print("This chunk's confidence score is" + best_chunk["final_confidence"])
+            print("This chunk's confidence score is" + str(best_chunk["final_confidence"]))
             if best_chunk["final_confidence"] >= 0.5:
                 break
 
