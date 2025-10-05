@@ -15,8 +15,12 @@ HF_REPO_ID = "GryffinT/SQuAD.QA"  # replace with your repo ID
 tokenizer = AutoTokenizer.from_pretrained(HF_REPO_ID)
 model = AutoModelForQuestionAnswering.from_pretrained(HF_REPO_ID)
 encoder = SentenceTransformer('all-MiniLM-L6-v2')
-nlp = spacy.load("en_core_web_sm")
-
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    from spacy.cli import download
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 # -------------------------------
 # Function to answer questions
 # -------------------------------
