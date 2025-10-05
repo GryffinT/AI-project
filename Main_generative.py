@@ -4,6 +4,7 @@ from sentence_transformers import SentenceTransformer, util
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import wikipedia as wiki
+from wikipedia.exceptions import DisambiguationError
 import spacy
 import numpy as np
 import torch
@@ -29,6 +30,13 @@ def get_wiki_page(title):
     try:
         page = wiki.page(title)
         return page.content
+    except DisambiguationError as e:
+        # pick first option
+        try:
+            page = wiki.page(e.options[0])
+            return page.content
+        except:
+            return ""
     except:
         return ""
 
@@ -37,7 +45,8 @@ def get_wiki_page(title):
 # -------------------------------
 @st.cache_data(ttl=3600)
 def embed_text(text):
-    return encoder.encode(text, convert_to_tensor=True)
+    # Return numpy array instead of tensor for Streamlit caching
+    return encoder.encode(text, convert_to_tensor=True).cpu().numpy()
 
 # -------------------------------
 # Main Output Function
@@ -49,7 +58,7 @@ def output(question: str, context: str) -> str:
         outputs = model(**inputs)
         start_idx = torch.argmax(outputs.start_logits)
         end_idx = torch.argmax(outputs.end_logits)
-        answer = tokenizer.decode(inputs["input_ids"][0][start_idx:end_idx + 1])
+        answer = tokenizer.decode(inputs["input_ids"][0][start_idx:end_idx + 1], skip_special_tokens=True)
         return answer
     else:
         # Wikipedia-based search
@@ -58,7 +67,7 @@ def output(question: str, context: str) -> str:
             return "Apologies, it would seem there are no relevant sources for your inquiry."
         
         pages_data = []
-        question_embed = embed_text(question)
+        question_embed = torch.tensor(embed_text(question))
         q_doc = nlp(question)
         
         # Limit pages to top 1–2 to reduce loading
@@ -69,11 +78,13 @@ def output(question: str, context: str) -> str:
             
             # Split into 3 chunks
             num_chunks = 3
-            chunk_size = len(page_content) // num_chunks
+            chunk_size = max(len(page_content) // num_chunks, 1)
             for i in range(num_chunks):
                 start = i * chunk_size
                 end = (i + 1) * chunk_size if i < num_chunks - 1 else len(page_content)
                 chunk = page_content[start:end]
+                if not chunk.strip():
+                    continue
 
                 # TF-IDF similarity
                 vectorizer = TfidfVectorizer(stop_words="english")
@@ -81,8 +92,8 @@ def output(question: str, context: str) -> str:
                 confidence_score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
 
                 # Semantic similarity
-                chunk_embed = embed_text(chunk)
-                semantic_confidence = util.cosine_similarity(question_embed, chunk_embed).item()
+                chunk_embed = torch.tensor(embed_text(chunk))
+                semantic_confidence = util.cos_sim(question_embed, chunk_embed).item()
 
                 # Position score
                 position_score = 1 - (i / (num_chunks - 1))
@@ -102,10 +113,15 @@ def output(question: str, context: str) -> str:
                     "position_score": position_score,
                     "ent_score": normalized_overlap
                 })
-        
+
+        if not pages_data:
+            return "Apologies, it would seem there are no relevant sources for your inquiry."
+
         # Normalize all scores
         def normalize_scores(pages_data, key):
             scores = np.array([p[key] for p in pages_data])
+            if len(scores) == 0:
+                return []
             min_val, max_val = scores.min(), scores.max()
             if max_val - min_val == 0:
                 return [0.5] * len(scores)
