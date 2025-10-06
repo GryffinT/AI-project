@@ -157,8 +157,8 @@ def output(question: str, context: str) -> str:
             # -------------------------------
             for p in pages_data:
                 combined_score = (
-                    0.25 * p["semantic_score_norm"]
-                    0.25 * p["title_semantic_score"]
+                    0.25 * p["semantic_score_norm"] +
+                    0.25 * p["title_semantic_score"] +
                     0.15 * p["tfidf_score_norm"] +
                     0.20 * p["ent_score_norm"] +
                     0.10 * p["position_score_norm"]
@@ -173,7 +173,7 @@ def output(question: str, context: str) -> str:
                 print(
                     f"{p['page_title'][:30]:30} | "
                     f"sem={p['semantic_score_norm']:.3f}, "
-                    f"title={p['title_score_norm']:.3f}, "
+                    f"title={p['title_semantic_score']:.3f}, "
                     f"tfidf={p['tfidf_score_norm']:.3f}, "
                     f"ent={p['ent_score_norm']:.3f}, "
                     f"pos={p['position_score_norm']:.3f}, "
