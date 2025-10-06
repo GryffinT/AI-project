@@ -129,7 +129,9 @@ def output(question: str, context: str) -> str:
             if not pages_data:
                 return "Apologies, it would seem there are no relevant sources for your inquiry."
 
-            # Normalize scores
+            # -------------------------------
+            # Normalize chunk-based scores
+            # -------------------------------
             def normalize_scores(pages_data, key):
                 scores = np.array([p[key] for p in pages_data])
                 if len(scores) == 0:
@@ -138,20 +140,48 @@ def output(question: str, context: str) -> str:
                 if max_val - min_val == 0:
                     return [0.5] * len(scores)
                 return (scores - min_val) / (max_val - min_val)
-
-            for key in ["tfidf_score", "semantic_score", "position_score", "ent_score"]:
+            
+            # Normalize chunk-level scores
+            for key in ["semantic_score", "tfidf_score", "position_score", "ent_score"]:
                 normalized = normalize_scores(pages_data, key)
                 for idx, val in enumerate(normalized):
                     pages_data[idx][f"{key}_norm"] = val
-
-            # Weighted combined score
+            
+            print("\nNormalized chunk-level scores (first 5 chunks):")
+            for p in pages_data[:5]:
+                print(f"Chunk from '{p['page_title'][:30]}...': semantic={p['semantic_score_norm']:.3f}, tfidf={p['tfidf_score_norm']:.3f}, ent={p['ent_score_norm']:.3f}, position={p['position_score_norm']:.3f}")
+            
+            # -------------------------------
+            # Normalize title scores across pages
+            # -------------------------------
+            page_title_scores = {}
+            for p in pages_data:
+                # store the max title_score per page
+                page_title_scores[p["page_title"]] = max(page_title_scores.get(p["page_title"], 0), p["title_score"])
+            
+            min_title, max_title = min(page_title_scores.values()), max(page_title_scores.values())
+            
+            for p in pages_data:
+                if max_title - min_title == 0:
+                    p["title_score_norm"] = 1.0
+                else:
+                    p["title_score_norm"] = (p["title_score"] - min_title) / (max_title - min_title)
+            
+            print("\nNormalized title scores per page:")
+            for title, score in page_title_scores.items():
+                normalized = (score - min_title) / (max_title - min_title) if max_title - min_title != 0 else 1.0
+                print(f"'{title[:40]}...': {normalized:.3f}")
+            
+            # -------------------------------
+            # Compute combined score
+            # -------------------------------
             for p in pages_data:
                 combined_score = (
                     0.35 * p["semantic_score_norm"] +
                     0.15 * p["tfidf_score_norm"] +
                     0.15 * p["ent_score_norm"] +
                     0.05 * p["position_score_norm"] +
-                    0.3 * p["title_score"]
+                    0.30 * p["title_score_norm"]
                 )
                 p["combined_score"] = combined_score
 
