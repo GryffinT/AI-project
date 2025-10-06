@@ -136,7 +136,7 @@ def output(question: str, context: str) -> str:
                 return "Apologies, it would seem there are no relevant sources for your inquiry."
 
             # -------------------------------
-            # Normalize chunk-based scores
+            # Normalize all scores between 0 and 1
             # -------------------------------
             def normalize_scores(pages_data, key):
                 scores = np.array([p[key] for p in pages_data])
@@ -148,60 +148,58 @@ def output(question: str, context: str) -> str:
                 return (scores - min_val) / (max_val - min_val)
             
             # Normalize chunk-level scores
-            for key in ["semantic_score", "tfidf_score", "position_score", "ent_score"]:
+            for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
                 normalized = normalize_scores(pages_data, key)
                 for idx, val in enumerate(normalized):
                     pages_data[idx][f"{key}_norm"] = val
             
-            print("\nNormalized chunk-level scores (first 5 chunks):")
-            for p in pages_data[:10]:
-                print(f"Chunk from '{p['page_title'][:30]}...': semantic={p['semantic_score_norm']:.3f}, tfidf={p['tfidf_score_norm']:.3f}, ent={p['ent_score_norm']:.3f}, position={p['position_score_norm']:.3f}")
-            
             # -------------------------------
-            # Normalize title scores across pages
-            # -------------------------------
-            page_title_scores = {}
-            for p in pages_data:
-                # store the max title_score per page
-                page_title_scores[p["page_title"]] = max(page_title_scores.get(p["page_title"], 0), p["title_score"])
-            
-            min_title, max_title = min(page_title_scores.values()), max(page_title_scores.values())
-            
-            for p in pages_data:
-                if max_title - min_title == 0:
-                    p["title_score_norm"] = 1.0
-                else:
-                    p["title_score_norm"] = (p["title_score"] - min_title) / (max_title - min_title)
-            
-            print("\nNormalized title scores per page:")
-            for title, score in page_title_scores.items():
-                normalized = (score - min_title) / (max_title - min_title) if max_title - min_title != 0 else 1.0
-                print(f"'{title[:40]}...': {normalized:.3f}")
-            
-            # -------------------------------
-            # Compute combined score
+            # Combine scores
             # -------------------------------
             for p in pages_data:
+                # Compute a separate "semantic × title" score
+                semantic_title = p["semantic_score_norm"] * p["title_score_norm"]
+                
+                # Weighted combination
                 combined_score = (
-                    0.30 * p["semantic_score_norm"] +
-                    0.25 * p["title_score_norm"] +
-                    0.20 * p["tfidf_score_norm"] +
-                    0.15 * p["ent_score_norm"] +
+                    0.50 * semantic_title +   # prioritize chunks with relevant content AND title
+                    0.15 * p["tfidf_score_norm"] +
+                    0.20 * p["ent_score_norm"] +
                     0.10 * p["position_score_norm"]
                 )
                 p["combined_score"] = combined_score
-
+            
+            # -------------------------------
+            # Debug: show top 10 chunk contributions
+            # -------------------------------
+            print("\nNormalized chunk-level scores (first 10 chunks):")
+            for p in pages_data[:10]:
+                print(
+                    f"{p['page_title'][:30]:30} | "
+                    f"sem={p['semantic_score_norm']:.3f}, "
+                    f"title={p['title_score_norm']:.3f}, "
+                    f"tfidf={p['tfidf_score_norm']:.3f}, "
+                    f"ent={p['ent_score_norm']:.3f}, "
+                    f"pos={p['position_score_norm']:.3f}, "
+                    f"semantic×title={p['semantic_score_norm']*p['title_score_norm']:.3f} -> "
+                    f"combined={p['combined_score']:.3f}"
+                )
+            
+            # -------------------------------
             # Softmax for probabilistic confidence
+            # -------------------------------
             combined_scores = np.array([p["combined_score"] for p in pages_data])
             e_x = np.exp(combined_scores - np.max(combined_scores))
             softmax_scores = e_x / e_x.sum()
-            print(f"The Softmax scores are: {softmax_scores}")
             for idx, s in enumerate(softmax_scores):
                 pages_data[idx]["final_confidence"] = s
-
+            
+            # -------------------------------
             # Select best chunk
+            # -------------------------------
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-            print(f"Chunk {best_chunk['page_title']} was selected as the best chunk.")
+            print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['final_confidence']:.3f}")
+
 
             # Stop looping if softmax confidence ≥ 0.5
             if best_chunk["final_confidence"] >= 0.5:
