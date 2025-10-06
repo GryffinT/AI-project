@@ -172,8 +172,8 @@ def output(question: str, context: str) -> str:
             for p in pages_data[:10]:
                 print(
                     f"{p['page_title'][:30]:30} | "
-                    f"sem={p['title_score']:.3f}, "
-                    f"title={p['title_semantic_score']:.3f}, "
+                    f"sem={p['semantic_score_norm']:.3f}, "
+                    f"title={p['title_score']:.3f}, "
                     f"tfidf={p['tfidf_score_norm']:.3f}, "
                     f"ent={p['ent_score_norm']:.3f}, "
                     f"pos={p['position_score_norm']:.3f}, "
