@@ -51,6 +51,7 @@ def embed_text(text):
 # -------------------------------
 def output(question: str, context: str) -> str:
     print(f"=========== QUERY INITIALIZED FOR {question} ===========")
+    
     if context.strip():
         # -------------------------------
         # Use QA model directly
@@ -61,150 +62,153 @@ def output(question: str, context: str) -> str:
         end_idx = torch.argmax(outputs.end_logits)
         answer = tokenizer.decode(inputs["input_ids"][0][start_idx:end_idx + 1], skip_special_tokens=True)
         return answer
-    else:
-        # -------------------------------
-        # Wikipedia-based search
-        # -------------------------------
-        search_results = wiki.search(question)
-        print(f"The wiki query returned: {search_results[:10]}")
-        if not search_results:
-            return "Apologies, it would seem there are no relevant sources for your inquiry."
+    
+    # -------------------------------
+    # Wikipedia-based search
+    # -------------------------------
+    search_results = wiki.search(question)
+    print(f"The wiki query returned: {search_results[:10]}")
+    if not search_results:
+        return "Apologies, it would seem there are no relevant sources for your inquiry."
 
-        pages_data = []
-        question_embed = embed_text(question)
-        q_doc = nlp(question)
-
-        best_chunk = None
-        max_attempts = 10  # safety limit to prevent infinite loops
-        attempt = 0
-        vectorizer = TfidfVectorizer(stop_words="english")
+    pages_data = []
+    question_embed = embed_text(question)
+    q_doc = nlp(question)
+    max_attempts = 10
+    attempt = 0
+    vectorizer = TfidfVectorizer(stop_words="english")
+    
+    while attempt < max_attempts:
+        print(f"==================================\nAttempt {attempt + 1}\n==================================")
+        attempt += 1
         
-        while attempt < max_attempts:
-            print(f"==================================")
-            attempt += 1
-            print(f"Attempt {attempt}")
-            print(f"==================================")
-            for page_title in search_results[:10]:
-                title_embed = embed_text(page_title)
-                title_semantic_score = util.cos_sim(question_embed, title_embed).item()
-                print("---------------------------------------------------------------------------")
-                print(f"The article {page_title} has a semantic score of: {title_semantic_score}")
-                page_content = get_wiki_page(page_title)
-                if not page_content.strip():
+        for page_title in search_results[:10]:
+            title_embed = embed_text(page_title)
+            title_semantic_score = util.cos_sim(question_embed, title_embed).item()
+            print("---------------------------------------------------------------------------")
+            print(f"The article {page_title} has a semantic score of: {title_semantic_score}")
+            
+            page_content = get_wiki_page(page_title)
+            if not page_content.strip():
+                continue
+
+            # Split into chunks
+            num_chunks = 3
+            chunk_size = max(len(page_content) // num_chunks, 1)
+            
+            for i in range(num_chunks):
+                start = i * chunk_size
+                end = (i + 1) * chunk_size if i < num_chunks - 1 else len(page_content)
+                chunk = page_content[start:end].strip()
+                if not chunk:
                     continue
 
-                # Split into chunks
-                num_chunks = 3
-                chunk_size = max(len(page_content) // num_chunks, 1)
-                for i in range(num_chunks):
-                    start = i * chunk_size
-                    end = (i + 1) * chunk_size if i < num_chunks - 1 else len(page_content)
-                    chunk = page_content[start:end].strip()
-                    if not chunk:
-                        continue
+                # TF-IDF similarity
+                tfidf_matrix = vectorizer.fit_transform([question, chunk])
+                tfidf_score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
 
-                    # TF-IDF similarity
-                    tfidf_matrix = vectorizer.fit_transform([question, chunk])
-                    tfidf_score = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
+                # Semantic similarity
+                chunk_embed = embed_text(chunk)
+                semantic_score = util.cos_sim(question_embed, chunk_embed).item()
 
-                    # Semantic similarity
-                    chunk_embed = embed_text(chunk)
-                    semantic_score = util.cos_sim(question_embed, chunk_embed).item()
+                # Position score
+                position_score = 1 - (i / (num_chunks - 1))
 
-                    # Position score
-                    position_score = 1 - (i / (num_chunks - 1))
+                # Entity overlap
+                chunk_doc = nlp(chunk)
+                question_entities = {ent.text for ent in q_doc.ents}
+                chunk_entities = {ent.text for ent in chunk_doc.ents}
+                ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
+                print(f" Processing attempt chunk {i + 1}")
 
-                    # Entity overlap
-                    chunk_doc = nlp(chunk)
-                    question_entities = {ent.text for ent in q_doc.ents}
-                    chunk_entities = {ent.text for ent in chunk_doc.ents}
-                    ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
-                    print(f" Processing attempt chunk {i + 1}")
+                pages_data.append({
+                    "page_title": page_title,
+                    "chunk_text": chunk,
+                    "tfidf_score": tfidf_score,
+                    "semantic_score": semantic_score,
+                    "position_score": position_score,
+                    "ent_score": ent_score,
+                    "title_score": title_semantic_score
+                })
 
-                    pages_data.append({
-                        "page_title": page_title,
-                        "chunk_text": chunk,
-                        "tfidf_score": tfidf_score,
-                        "semantic_score": semantic_score,
-                        "position_score": position_score,
-                        "ent_score": ent_score,
-                        "title_score": title_semantic_score
-                    })
-                    
+        if not pages_data:
+            return "Apologies, it would seem there are no relevant sources for your inquiry."
 
-            if not pages_data:
-                return "Apologies, it would seem there are no relevant sources for your inquiry."
+        # -------------------------------
+        # Normalize scores
+        # -------------------------------
+        def normalize_scores(values):
+            arr = np.array(values)
+            if len(arr) == 0:
+                return [0.5] * len(values)
+            min_val, max_val = arr.min(), arr.max()
+            if max_val - min_val == 0:
+                return [1.0] * len(values)
+            return (arr - min_val) / (max_val - min_val)
 
-            # -------------------------------
-            # Normalize all scores between 0 and 1
-            # -------------------------------
-            def normalize_scores(pages_data, key):
-                scores = np.array([p[key] for p in pages_data])
-                if len(scores) == 0:
-                    return [0.5] * len(pages_data)
-                min_val, max_val = scores.min(), scores.max()
-                if max_val - min_val == 0:
-                    return [0.5] * len(scores)
-                return (scores - min_val) / (max_val - min_val)
-            
-            # Normalize chunk-level scores
-            for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
-                normalized = normalize_scores(pages_data, key)
-                for idx, val in enumerate(normalized):
-                    pages_data[idx][f"{key}_norm"] = val
-            
-            # -------------------------------
-            # Combine scores
-            # -------------------------------
-            for p in pages_data:
-                # Compute a separate "semantic × title" score
-                semantic_title = p["semantic_score_norm"] * p["title_score_norm"]
-                
-                # Weighted combination
-                combined_score = (
-                    0.50 * semantic_title +   # prioritize chunks with relevant content AND title
-                    0.15 * p["tfidf_score_norm"] +
-                    0.20 * p["ent_score_norm"] +
-                    0.10 * p["position_score_norm"]
-                )
-                p["combined_score"] = combined_score
-            
-            # -------------------------------
-            # Debug: show top 10 chunk contributions
-            # -------------------------------
-            print("\nNormalized chunk-level scores (first 10 chunks):")
-            for p in pages_data[:10]:
-                print(
-                    f"{p['page_title'][:30]:30} | "
-                    f"sem={p['semantic_score_norm']:.3f}, "
-                    f"title={p['title_score_norm']:.3f}, "
-                    f"tfidf={p['tfidf_score_norm']:.3f}, "
-                    f"ent={p['ent_score_norm']:.3f}, "
-                    f"pos={p['position_score_norm']:.3f}, "
-                    f"semantic×title={p['semantic_score_norm']*p['title_score_norm']:.3f} -> "
-                    f"combined={p['combined_score']:.3f}"
-                )
-            
-            # -------------------------------
-            # Softmax for probabilistic confidence
-            # -------------------------------
-            combined_scores = np.array([p["combined_score"] for p in pages_data])
-            e_x = np.exp(combined_scores - np.max(combined_scores))
-            softmax_scores = e_x / e_x.sum()
-            for idx, s in enumerate(softmax_scores):
-                pages_data[idx]["final_confidence"] = s
-            
-            # -------------------------------
-            # Select best chunk
-            # -------------------------------
-            best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-            print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['final_confidence']:.3f}")
+        # Normalize chunk-level scores (semantic, tfidf, ent, position)
+        for key in ["semantic_score", "tfidf_score", "ent_score", "position_score"]:
+            normalized = normalize_scores([p[key] for p in pages_data])
+            for idx, val in enumerate(normalized):
+                pages_data[idx][f"{key}_norm"] = val
 
+        # Normalize title scores **per page** so all chunks from a page get same title_score_norm
+        page_titles = list({p["page_title"] for p in pages_data})
+        page_title_scores = [max(p["title_score"] for p in pages_data if p["page_title"] == title) for title in page_titles]
+        normalized_page_scores = normalize_scores(page_title_scores)
+        title_norm_map = dict(zip(page_titles, normalized_page_scores))
+        for p in pages_data:
+            p["title_score_norm"] = title_norm_map[p["page_title"]]
 
-            # Stop looping if softmax confidence ≥ 0.5
-            if best_chunk["final_confidence"] >= 0.5:
-                break
+        # -------------------------------
+        # Combine scores
+        # -------------------------------
+        for p in pages_data:
+            semantic_title = p["semantic_score_norm"] * p["title_score_norm"]
+            combined_score = (
+                0.50 * semantic_title +
+                0.15 * p["tfidf_score_norm"] +
+                0.20 * p["ent_score_norm"] +
+                0.10 * p["position_score_norm"]
+            )
+            p["combined_score"] = combined_score
 
-        # Return the best chunk
-        return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
+        # -------------------------------
+        # Debug: top 10 chunks
+        # -------------------------------
+        print("\nNormalized chunk-level scores (first 10 chunks):")
+        for p in pages_data[:10]:
+            print(
+                f"{p['page_title'][:30]:30} | "
+                f"sem={p['semantic_score_norm']:.3f}, "
+                f"title={p['title_score_norm']:.3f}, "
+                f"tfidf={p['tfidf_score_norm']:.3f}, "
+                f"ent={p['ent_score_norm']:.3f}, "
+                f"pos={p['position_score_norm']:.3f}, "
+                f"semantic×title={p['semantic_score_norm']*p['title_score_norm']:.3f} -> "
+                f"combined={p['combined_score']:.3f}"
+            )
+
+        # -------------------------------
+        # Softmax confidence
+        # -------------------------------
+        combined_scores = np.array([p["combined_score"] for p in pages_data])
+        e_x = np.exp(combined_scores - np.max(combined_scores))
+        softmax_scores = e_x / e_x.sum()
+        for idx, s in enumerate(softmax_scores):
+            pages_data[idx]["final_confidence"] = s
+
+        # -------------------------------
+        # Select best chunk
+        # -------------------------------
+        best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
+        print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['final_confidence']:.3f}")
+
+        # Stop if confidence high enough
+        if best_chunk["final_confidence"] >= 0.5:
+            break
+
+    # Return best chunk
+    return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
+
 
