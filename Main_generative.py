@@ -121,7 +121,8 @@ def output(question: str, context: str) -> str:
                         "tfidf_score": tfidf_score,
                         "semantic_score": semantic_score,
                         "position_score": position_score,
-                        "ent_score": ent_score
+                        "ent_score": ent_score,
+                        "title_score": title_semantic_score
                     })
                     
 
@@ -149,7 +150,8 @@ def output(question: str, context: str) -> str:
                     0.5 * p["semantic_score_norm"] +
                     0.3 * p["tfidf_score_norm"] +
                     0.1 * p["ent_score_norm"] +
-                    0.1 * p["position_score_norm"]
+                    0.1 * p["position_score_norm"],
+                    0.3 * p["title_score]
                 )
                 p["combined_score"] = combined_score
 
