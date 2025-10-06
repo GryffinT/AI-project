@@ -55,6 +55,6 @@ if prompt := st.chat_input("Ask Laurent anything."):
         
         wrapped_generation = wrap_text(generation, words_per_line=7)
         response = f"### \n```text\n{wrapped_generation}\n```"
-        st.markdown(f"Metadata: {classifications}")
+        st.markdown(f"### \n```text\n Metadata: {classifications}\n```")
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
