@@ -151,7 +151,7 @@ def output(question: str, context: str) -> str:
                     0.3 * p["tfidf_score_norm"] +
                     0.1 * p["ent_score_norm"] +
                     0.1 * p["position_score_norm"],
-                    0.3 * p["title_score]
+                    0.3 * p["title_score"]
                 )
                 p["combined_score"] = combined_score
 
