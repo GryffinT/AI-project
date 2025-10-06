@@ -50,6 +50,7 @@ def embed_text(text):
 # Main Output Function
 # -------------------------------
 def output(question: str, context: str) -> str:
+    print(f"=========== QUERY INITIALIZES FOR {question} ===========")
     if context.strip():
         # -------------------------------
         # Use QA model directly
