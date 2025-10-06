@@ -122,7 +122,7 @@ def output(question: str, context: str) -> str:
                         "semantic_score": semantic_score,
                         "position_score": position_score,
                         "ent_score": ent_score,
-                        "title_score": title_semantic_score
+                        "title_score": title_semantic_score.item()
                     })
                     
 
