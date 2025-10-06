@@ -48,6 +48,6 @@ if prompt := st.chat_input("Ask Laurent anything."):
     with st.chat_message("assistant"):
         classifications = Main_classification.pipeline.predict(prompt)
         generation = output(prompt, "")
-        response = f"The classifications are: {classifications}, and my answer is {generation}"
+        response = f"### Classifications\n```text\n{generation}\n```"
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
