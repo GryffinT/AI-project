@@ -53,7 +53,7 @@ if prompt := st.chat_input("Ask Laurent anything."):
             lines = [' '.join(words[i:i+words_per_line]) for i in range(0, len(words), words_per_line)]
             return '\n'.join(lines)
         
-        wrapped_generation = wrap_text(generation, words_per_line=5)
+        wrapped_generation = wrap_text(generation, words_per_line=7)
         response = f"### Classifications\n```text\n{wrapped_generation}\n```"
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
