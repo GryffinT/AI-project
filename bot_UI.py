@@ -48,7 +48,7 @@ if prompt := st.chat_input("Ask Laurent anything."):
     with st.chat_message("assistant"):
         classifications = Main_classification.pipeline.predict(prompt)
         generation = output(prompt, "")
-        def wrap_text(text, words_per_line=5):
+        def wrap_text(text, words_per_line=7):
             words = text.split()
             lines = [' '.join(words[i:i+words_per_line]) for i in range(0, len(words), words_per_line)]
             return '\n'.join(lines)
