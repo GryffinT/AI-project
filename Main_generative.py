@@ -153,7 +153,7 @@ def output(question: str, context: str) -> str:
                     pages_data[idx][f"{key}_norm"] = val
             
             print("\nNormalized chunk-level scores (first 5 chunks):")
-            for p in pages_data[:5]:
+            for p in pages_data[:10]:
                 print(f"Chunk from '{p['page_title'][:30]}...': semantic={p['semantic_score_norm']:.3f}, tfidf={p['tfidf_score_norm']:.3f}, ent={p['ent_score_norm']:.3f}, position={p['position_score_norm']:.3f}")
             
             # -------------------------------
