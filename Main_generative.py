@@ -65,6 +65,7 @@ def output(question: str, context: str) -> str:
         # Wikipedia-based search
         # -------------------------------
         search_results = wiki.search(question)
+        print(f"The wiki query returned: {search_results[:5]}")
         if not search_results:
             return "Apologies, it would seem there are no relevant sources for your inquiry."
 
@@ -78,7 +79,10 @@ def output(question: str, context: str) -> str:
         vectorizer = TfidfVectorizer(stop_words="english")
         
         while attempt < max_attempts:
+            print(f"==================================")
             attempt += 1
+            print(f"Attempt {attempt}")
+            print(f"==================================")
             for page_title in search_results[:5]:
                 title_embed = embed_text(page_title)
                 title_semantic_score = util.cos_sim(question_embed, title_embed).item()
