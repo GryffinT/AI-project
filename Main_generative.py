@@ -195,7 +195,7 @@ def output(question: str, context: str) -> str:
 
             # Select best chunk
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-            print(f"Chunk {best_chunk.page_title} was selected as the best chunk.")
+            print(f"Chunk {best_chunk['page_title']} was selected as the best chunk.")
 
             # Stop looping if softmax confidence ≥ 0.5
             if best_chunk["final_confidence"] >= 0.5:
