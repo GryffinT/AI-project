@@ -151,21 +151,20 @@ def output(question: str, context: str) -> str:
                     0.3 * p["tfidf_score_norm"] +
                     0.1 * p["ent_score_norm"] +
                     0.1 * p["position_score_norm"] +
-                    0.3 * p["title_score"]
+                    0.6 * p["title_score"]
                 )
                 p["combined_score"] = combined_score
 
             # Softmax for probabilistic confidence
-            #combined_scores = np.array([p["combined_score"] for p in pages_data])
-            #e_x = np.exp(combined_scores - np.max(combined_scores))
-            #softmax_scores = e_x / e_x.sum()
-            #print(f"The Softmax scores are: {softmax_scores}")
-            #for idx, s in enumerate(softmax_scores):
-            #    pages_data[idx]["final_confidence"] = s
+            combined_scores = np.array([p["combined_score"] for p in pages_data])
+            e_x = np.exp(combined_scores - np.max(combined_scores))
+            softmax_scores = e_x / e_x.sum()
+            print(f"The Softmax scores are: {softmax_scores}")
+            for idx, s in enumerate(softmax_scores):
+                pages_data[idx]["final_confidence"] = s
 
             # Select best chunk
-            #best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
-            best_chunk = max(pages_data, key=lambda p: p["combined_score"])
+            best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
 
             # Stop looping if softmax confidence ≥ 0.5
             if best_chunk["final_confidence"] >= 0.5:
