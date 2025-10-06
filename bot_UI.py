@@ -48,6 +48,12 @@ if prompt := st.chat_input("Ask Laurent anything."):
     with st.chat_message("assistant"):
         classifications = Main_classification.pipeline.predict(prompt)
         generation = output(prompt, "")
-        response = f"### Classifications\n```text\n{generation}\n```"
+        def wrap_text(text, words_per_line=5):
+            words = text.split()
+            lines = [' '.join(words[i:i+words_per_line]) for i in range(0, len(words), words_per_line)]
+            return '\n'.join(lines)
+        
+        wrapped_generation = wrap_text(generation, words_per_line=5)
+        response = f"### Classifications\n```text\n{wrapped_generation}\n```"
         st.markdown(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
