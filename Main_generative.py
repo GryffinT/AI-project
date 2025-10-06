@@ -193,10 +193,10 @@ def output(question: str, context: str) -> str:
             # -------------------------------
             # Select best chunk
             # -------------------------------
-            best_chunk = max(pages_data, key=lambda x: x["combined_score"])
-            print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['combined_score']:.3f}")
+            best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
+            print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['final_confidence']:.3f}")
 
             if best_chunk["final_confidence"] >= 0.5:
                 break
 
-        return f"{best_chunk['page_title']} — Confidence: {best_chunk['combined_score']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
+        return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
