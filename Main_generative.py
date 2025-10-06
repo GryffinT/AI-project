@@ -14,8 +14,9 @@ import torch
 # -------------------------------
 @st.cache_resource
 def load_models():
-    tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased-distilled-squad")
-    model = AutoModelForQuestionAnswering.from_pretrained("distilbert-base-uncased-distilled-squad")
+    dir = ["GryffinT/SQuAD.V2.qa", "distilbert-base-uncased-distilled-squad"]
+    tokenizer = AutoTokenizer.from_pretrained(dir[1])
+    model = AutoModelForQuestionAnswering.from_pretrained(dir[1])
     encoder = SentenceTransformer('all-MiniLM-L6-v2')
     nlp_model = spacy.load("en_core_web_sm")
     return tokenizer, model, encoder, nlp_model
@@ -195,8 +196,5 @@ def output(question: str, context: str) -> str:
             # -------------------------------
             best_chunk = max(pages_data, key=lambda x: x["final_confidence"])
             print(f"\nChunk '{best_chunk['page_title']}' was selected as the best chunk with final confidence {best_chunk['final_confidence']:.3f}")
-
-            if best_chunk["final_confidence"] >= 0.5:
-                break
 
         return f"{best_chunk['page_title']} — Confidence: {best_chunk['final_confidence']:.3f}\n\n{best_chunk['chunk_text'][:600]}"
