@@ -177,10 +177,10 @@ def output(question: str, context: str) -> str:
             # -------------------------------
             for p in pages_data:
                 combined_score = (
-                    0.30 * p["semantic_score_norm"] * p["title_score_norm"] +
-                    0.2 * p["tfidf_score_norm"] +
-                    0.2.5 * p["ent_score_norm"] +
-                    0.1.5 * p["position_score_norm"] +
+                    0.40 * p["semantic_score_norm"] * p["title_score_norm"] +
+                    0.25 * p["tfidf_score_norm"] +
+                    0.25 * p["ent_score_norm"] +
+                    0.10 * p["position_score_norm"]
                 )
                 p["combined_score"] = combined_score
 
