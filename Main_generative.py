@@ -86,6 +86,7 @@ def output(question: str, context: str) -> str:
             for page_title in search_results[:10]:
                 title_embed = embed_text(page_title)
                 title_semantic_score = util.cos_sim(question_embed, title_embed).item()
+                print("---------------------------------------------------------------------------")
                 print(f"The article {page_title} has a semantic score of: {title_semantic_score}")
                 page_content = get_wiki_page(page_title)
                 if not page_content.strip():
@@ -117,7 +118,7 @@ def output(question: str, context: str) -> str:
                     question_entities = {ent.text for ent in q_doc.ents}
                     chunk_entities = {ent.text for ent in chunk_doc.ents}
                     ent_score = len(question_entities & chunk_entities) / max(len(question_entities), 1)
-                    print(f" Processing attempt {attempt + 1} Chunk {i + 1}")
+                    print(f" Processing attempt chunk {i + 1}")
 
                     pages_data.append({
                         "page_title": page_title,
