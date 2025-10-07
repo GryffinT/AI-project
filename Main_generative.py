@@ -164,7 +164,7 @@ def output(question: str, context: str) -> str:
             scores_ranking= {}
             for entry in pages_data:
                 scores_ranking[entry["title_score"]] = entry
-            best_title_key = list(scores_ranking.keys()).maximum()
+            best_title_key = list(scores_ranking.keys()).max()
             best_title = scores_ranking[best_title_key]
                 
 
