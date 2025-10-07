@@ -161,11 +161,11 @@ def output(question: str, context: str) -> str:
                     return [0.5] * len(scores)
                 return (scores - min_val) / (max_val - min_val)
 
-            scores_ranking= {}
+            scores_ranking = {}
             for entries in pages_data:
-                score_ranking[entries["page_title"]] = entries["title_score"]
+                scores_ranking[entries["page_title"]] = entries["title_score"]
             print("+++++++++++++++++++++++++++++")
-            print(score_ranking)
+            print(scores_ranking)
             print("+++++++++++++++++++++++++++++")
             
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
