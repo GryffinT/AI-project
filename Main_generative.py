@@ -9,6 +9,18 @@ import spacy
 import numpy as np
 import torch
 
+# ======= Weights config =======
+
+tw1 = 0.50
+ssnw = 0.20
+tw2 = 0.35
+tfidfw = 0.20
+entw = 0.15
+posw = 0.10
+tsst = 0.85
+
+# ======= Weights config =======
+
 # -------------------------------
 # Caching heavy model loads
 # -------------------------------
@@ -89,6 +101,7 @@ def output(question: str, context: str) -> str:
             for page_title in search_results[:10]:
                 title_embed = embed_text(page_title)
                 title_semantic_score = util.cos_sim(question_embed, title_embed).item()
+                    
                 print("---------------------------------------------------------------------------")
                 print(f"The article {page_title} has a semantic score of: {title_semantic_score}")
                 page_content = get_wiki_page(page_title)
@@ -148,7 +161,17 @@ def output(question: str, context: str) -> str:
                     return [0.5] * len(scores)
                 return (scores - min_val) / (max_val - min_val)
 
+            scores_ranking= {}
+            for entry in pages_data:
+                scores_ranking[entry["title_score"]] = entry
+            best_title_key = scores_ranking.keys().maximum()
+            best_title = scores_ranking[best_title_key]
+                
+
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
+                for items in pages_data:
+                    if pages_data[items]["page_title"] == best_title:
+                        pages_data[items]["page_title"] += tw1
                 normalized = normalize_scores(pages_data, key)
                 for idx, val in enumerate(normalized):
                     pages_data[idx][f"{key}_norm"] = val
@@ -158,11 +181,11 @@ def output(question: str, context: str) -> str:
             # -------------------------------
             for p in pages_data:
                 combined_score = (
-                    0.20 * p["semantic_score_norm"] +
-                    0.30 * p["title_score"] +
-                    0.15 * p["tfidf_score_norm"] +
-                    0.20 * p["ent_score_norm"] +
-                    0.10 * p["position_score_norm"]
+                    ssnw * p["semantic_score_norm"] +
+                    tw2 * p["title_score"] +
+                    tfidfw * p["tfidf_score_norm"] +
+                    entw * p["ent_score_norm"] +
+                    posw * p["position_score_norm"]
                 )
                 p["combined_score"] = combined_score
 
