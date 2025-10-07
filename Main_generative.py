@@ -162,16 +162,14 @@ def output(question: str, context: str) -> str:
                 return (scores - min_val) / (max_val - min_val)
 
             scores_ranking= {}
-            for entry in pages_data:
-                scores_ranking[pages_data[entry]["title_score"]] = entry
-            best_title_key = max(list(scores_ranking.keys()))
-            best_title = scores_ranking[best_title_key]
-                
+            for entries in pages_data:
+                print("+++++++++++++++++++++++++++++")
+                print(entries)
+                print("+++++++++++++++++++++++++++++")
 
+            
+            
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
-                for items in pages_data:
-                    if pages_data[items]["page_title"] == best_title:
-                        pages_data[items]["page_title"] += tw1
                 normalized = normalize_scores(pages_data, key)
                 for idx, val in enumerate(normalized):
                     pages_data[idx][f"{key}_norm"] = val
