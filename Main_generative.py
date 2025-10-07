@@ -164,7 +164,6 @@ def output(question: str, context: str) -> str:
                 if max_val - min_val == 0:
                     return [0.5] * len(scores)
                 return (scores - min_val) / (max_val - min_val)
-
             
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
                 normalized = normalize_scores(pages_data, key)
