@@ -163,11 +163,10 @@ def output(question: str, context: str) -> str:
 
             scores_ranking= {}
             for entries in pages_data:
-                print("+++++++++++++++++++++++++++++")
-                print(entries)
-                print("+++++++++++++++++++++++++++++")
-
-            
+                score_ranking[entries["page_title"]] = entries["title_score"]
+            print("+++++++++++++++++++++++++++++")
+            print(score_ranking)
+            print("+++++++++++++++++++++++++++++")
             
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
                 normalized = normalize_scores(pages_data, key)
