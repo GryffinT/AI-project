@@ -149,6 +149,10 @@ def output(question: str, context: str) -> str:
             if not pages_data:
                 return "Apologies, it would seem there are no relevant sources for your inquiry."
 
+            # Bump best title
+            max_title = max(p["title_score"] for p in pages_data)
+            for p in pages_data:
+                p["title_score"] += tw1 * (p["title_score"] / max_title)
             # -------------------------------
             # Normalize all scores between 0 and 1
             # -------------------------------
@@ -161,17 +165,6 @@ def output(question: str, context: str) -> str:
                     return [0.5] * len(scores)
                 return (scores - min_val) / (max_val - min_val)
 
-            scores_ranking = {}
-            scores_ranking_list = []
-            for entries in pages_data:
-                scores_ranking[entries["title_score"]] = entries["page_title"]
-                best_score = max(scores_ranking_list.append(entries["title_score"]))
-                best_title = scores_ranking[best_score]
-                if entries["page_title"] == best_title:
-                    entries["title_score"] += tw1   
-                    print("+++++++++++++++++++++++++++++")
-                    print(entries["title_score"] + "=" + entries["page_title"])
-                    print("+++++++++++++++++++++++++++++")
             
             for key in ["semantic_score", "tfidf_score", "ent_score", "position_score", "title_score"]:
                 normalized = normalize_scores(pages_data, key)
